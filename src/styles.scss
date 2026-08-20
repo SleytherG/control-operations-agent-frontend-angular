@@ -169,6 +169,12 @@ body {
 }
 
 // ===== Global skeleton loading animation =====
+@keyframes skeleton-pulse {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// .skeleton-bar — inline text-replacement skeleton (original)
 .skeleton-bar {
   display: inline-block;
   width: 80%;
@@ -179,15 +185,23 @@ body {
   animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
 
-@keyframes skeleton-pulse {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+// .skeleton-card — block skeleton for table cells, cards, list items
+// Used in all admin table pages (users, operation-types, audit, roles, agents)
+.skeleton-card {
+  display: block;
+  background: linear-gradient(90deg, #e8e8e8 25%, #f4f4f4 50%, #e8e8e8 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+  border-radius: 4px;
+  flex-shrink: 0;
 }
 
 @media (forced-colors: active) {
-  .skeleton-bar {
+  .skeleton-bar,
+  .skeleton-card {
     background: ButtonFace;
     border: 1px solid ButtonText;
+    animation: none;
   }
 }
 
