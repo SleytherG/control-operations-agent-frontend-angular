@@ -119,9 +119,14 @@ export class AppComponent implements OnInit, OnDestroy {
   async onSessionContinue(): Promise<void> {
     this.showSessionDialog.set(false);
     this.isTimerAlarming.set(false);
-    this.alarmFired = false; // reset so alarm re-fires after next expiry window
-    // Renew the JWT — this is the critical call that was missing
+    // IMPORTANT: Do NOT reset alarmFired here.
+    // The old token is still in localStorage while refreshSession() is in-flight.
+    // updateClock() runs every second and would immediately re-trigger the modal
+    // if alarmFired were false while secondsLeft <= 30 on the old token.
+    // We reset alarmFired only AFTER the new token (with full lifetime) is stored.
     await this.facade.refreshSession();
+    // New token is now in localStorage — secondsLeft will be >> 30, so safe to reset.
+    this.alarmFired = false;
   }
 
   onSessionClose(): void {
