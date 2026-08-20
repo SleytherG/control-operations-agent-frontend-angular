@@ -43,11 +43,24 @@
     <!-- User list body -->
     <div class="user-list">
 
-      <!-- Loading state -->
+      <!-- Loading state — skeleton user items matching actual user-item layout -->
       <ng-container *ngIf="facade.state().listStatus === 'loading'">
-        <div class="user-list-empty">
-          <span class="material-symbols-outlined">progress_activity</span>
-          <p>Cargando usuarios...</p>
+        <div
+          *ngFor="let i of [1,2,3,4,5,6,7]"
+          class="user-item"
+          style="cursor:default;pointer-events:none;"
+          aria-hidden="true"
+        >
+          <div class="user-avatar-wrapper">
+            <div class="skeleton-card" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;"></div>
+          </div>
+          <div class="user-item-info">
+            <div class="skeleton-card" style="width:120px;height:13px;border-radius:4px;margin-bottom:6px;"></div>
+            <div class="skeleton-card" style="width:160px;height:11px;border-radius:4px;"></div>
+          </div>
+          <div class="user-item-badges">
+            <div class="skeleton-card" style="width:64px;height:20px;border-radius:10px;"></div>
+          </div>
         </div>
       </ng-container>
 
