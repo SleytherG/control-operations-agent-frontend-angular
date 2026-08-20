@@ -11,8 +11,8 @@ WORKDIR /app
 # Copiar package files primero (caché de capas)
 COPY package.json package-lock.json ./
 
-# Instalar dependencias
-RUN npm ci --ignore-scripts
+# Instalar dependencias (--legacy-peer-deps resuelve conflictos de versiones entre paquetes Angular)
+RUN npm ci --ignore-scripts --legacy-peer-deps
 
 # Copiar el resto del código
 COPY . .
