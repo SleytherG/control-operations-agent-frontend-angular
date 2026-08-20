@@ -1,0 +1,92 @@
+<!-- RecuperarContrasenaPageComponent — pixel-perfect per mockup screen 19 -->
+<!-- Uses project design system: --af-* CSS custom properties + semantic class names -->
+
+<div class="recovery-page">
+  <div class="recovery-card">
+
+    <!-- ── Brand Header ─────────────────────────────────────────────────── -->
+    <div class="recovery-header">
+      <h1 class="recovery-brand">AgenteFlow</h1>
+      <p class="recovery-brand-sub">Recuperación de Acceso</p>
+    </div>
+
+    @if (!isSent) {
+
+      <!-- ── Body Text ─────────────────────────────────────────────────── -->
+      <div class="recovery-body">
+        <h2 class="recovery-title">¿Olvidó su contraseña?</h2>
+        <p class="recovery-description">
+          Ingrese su dirección de correo electrónico institucional y le enviaremos
+          un enlace para restablecer su acceso.
+        </p>
+      </div>
+
+      <!-- ── Error Banners ─────────────────────────────────────────────── -->
+      @if (hasDeliveryError) {
+        <div class="error-banner" role="alert">
+          <span class="material-symbols-outlined">error</span>
+          <p>No se pudo enviar el correo. Intente de nuevo o contacte al administrador.</p>
+        </div>
+      }
+      @if (hasRateLimit) {
+        <div class="error-banner" role="alert">
+          <span class="material-symbols-outlined">block</span>
+          <p>Ha superado el número máximo de intentos. Intente de nuevo en unos minutos.</p>
+        </div>
+      }
+
+      <!-- ── Form ──────────────────────────────────────────────────────── -->
+      <form class="recovery-form" (ngSubmit)="onSubmit()">
+        <div class="field-group">
+          <label class="field-label" for="recovery-email">Correo Electrónico</label>
+          <div class="field-input-wrapper">
+            <span class="material-symbols-outlined field-icon">mail</span>
+            <input
+              id="recovery-email"
+              name="email"
+              type="email"
+              class="field-input"
+              [(ngModel)]="email"
+              placeholder="usuario@agenteflow.com"
+              required
+              autocomplete="email"
+              [disabled]="isSending"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="isSending">
+          @if (isSending) {
+            <span class="material-symbols-outlined spinning">progress_activity</span>
+            <span>Enviando...</span>
+          } @else {
+            <span>Enviar enlace de recuperación</span>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          }
+        </button>
+      </form>
+
+    } @else {
+
+      <!-- ── Confirmation ───────────────────────────────────────────────── -->
+      <div class="recovery-confirmation">
+        <div class="confirmation-icon-wrapper">
+          <span class="material-symbols-outlined">mark_email_read</span>
+        </div>
+        <h2 class="confirmation-title">Correo enviado</h2>
+        <p class="confirmation-text">
+          Si el correo está registrado, recibirá un enlace de recuperación en breve.
+          Revise su bandeja de entrada y carpeta de spam.
+        </p>
+      </div>
+
+    }
+
+    <!-- ── Back Link ─────────────────────────────────────────────────────── -->
+    <a routerLink="/login" class="back-link">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Volver al inicio de sesión
+    </a>
+
+  </div>
+</div>

@@ -1,0 +1,264 @@
+<div class="app-container operations-page">
+  <h1 class="page-title">Registro de Operaciones</h1>
+
+  <!-- Accessible live region for dynamic announcements (FR-018) -->
+  <div
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+    class="sr-only"
+    data-testid="aria-live-region"
+    id="aria-announcements"
+  ></div>
+
+  <!-- ===== PENDING REVIEW STATE ===== -->
+  @if (isPendingReview) {
+    <section class="pending-review" aria-label="Confirmación pendiente" role="region">
+      <h2>Confirmación pendiente</h2>
+      <p class="pending-info">
+        Hay una confirmación pendiente de tipo
+        <strong>{{ formatType(state.rawType) }}</strong>
+        por monto <strong>{{ state.rawAmount }}</strong>.
+        La clave de idempotencia ha sido conservada.
+      </p>
+      @if (state.errorMessage) {
+        <p class="error-message" role="alert" aria-live="assertive">
+          {{ state.errorMessage }}
+        </p>
+      }
+      <div class="pending-actions">
+        <button
+          mat-raised-button
+          color="primary"
+          data-testid="btn-retry"
+          [disabled]="isSubmitting"
+          (click)="onRetry()"
+          aria-label="Reintentar el registro con la misma confirmación"
+        >
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+        <button
+          mat-stroked-button
+          data-testid="btn-edit-new"
+          [disabled]="isSubmitting"
+          (click)="onEditNew()"
+          aria-label="Editar como nueva confirmación"
+        >
+          <mat-icon aria-hidden="true">edit</mat-icon>
+          Editar como nueva confirmación
+        </button>
+        <button
+          mat-stroked-button
+          color="warn"
+          data-testid="btn-discard"
+          [disabled]="isSubmitting"
+          (click)="onDiscard()"
+          aria-label="Descartar confirmación pendiente"
+        >
+          <mat-icon aria-hidden="true">delete_outline</mat-icon>
+          Descartar
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- ===== REGISTRATION FORM (shown when not in pending review) ===== -->
+  @if (!isPendingReview) {
+    <section aria-label="Registrar operación" role="region">
+      <h2>Nueva operación</h2>
+
+      @if (state.errorMessage) {
+        <p class="error-message" role="alert" aria-live="assertive">
+          {{ state.errorMessage }}
+        </p>
+      }
+
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        aria-label="Formulario de registro de operación"
+        novalidate
+      >
+        <!-- Type select -->
+        <mat-form-field appearance="outline" class="field-full-width">
+          <mat-label>Tipo de operación</mat-label>
+          <mat-select
+            formControlName="type"
+            data-testid="field-type"
+            [attr.aria-describedby]="state.fieldErrors?.type ? 'error-type' : null"
+            required
+          >
+            @for (opType of operationTypes; track opType) {
+              <mat-option [value]="opType" data-testid="type-option">
+                {{ operationTypeLabels[opType] }}
+              </mat-option>
+            }
+          </mat-select>
+          @if (state.fieldErrors?.type || (form.get('type')?.invalid && form.get('type')?.touched)) {
+            <mat-error id="error-type" data-testid="error-type" role="alert">
+              {{ state.fieldErrors?.type || 'Seleccione un tipo de operación' }}
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Amount input -->
+        <mat-form-field appearance="outline" class="field-full-width">
+          <mat-label>Monto</mat-label>
+          <input
+            matInput
+            formControlName="amount"
+            data-testid="field-amount"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            [attr.aria-describedby]="state.fieldErrors?.amount ? 'error-amount' : null"
+            placeholder="Ej: 1250.50"
+            required
+          />
+          @if (state.fieldErrors?.amount || (form.get('amount')?.invalid && form.get('amount')?.touched)) {
+            <mat-error id="error-amount" data-testid="error-amount" role="alert">
+              {{ state.fieldErrors?.amount || 'Ingrese un monto válido mayor que cero' }}
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Submit button -->
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          data-testid="btn-submit"
+          [disabled]="isSubmitting || state.status === 'cleanup-error'"
+          aria-label="Confirmar registro de operación"
+        >
+          @if (isSubmitting) {
+            <mat-spinner diameter="20" aria-hidden="true"></mat-spinner>
+            <span class="sr-only">Registrando...</span>
+          } @else {
+            <ng-container>
+              <mat-icon aria-hidden="true">save</mat-icon>
+              Registrar
+            </ng-container>
+          }
+        </button>
+      </form>
+    </section>
+  }
+
+  <!-- ===== HISTORY SECTION ===== -->
+  <section class="history-section" aria-label="Historial de operaciones" role="region">
+    <div class="history-header">
+      <h2>Historial global</h2>
+      <button
+        mat-icon-button
+        data-testid="btn-refresh"
+        (click)="onRefresh()"
+        aria-label="Actualizar historial"
+        [disabled]="isLoading"
+      >
+        <mat-icon aria-hidden="true">sync</mat-icon>
+      </button>
+    </div>
+
+    @if (state.status === 'error') {
+      <p class="history-error" data-testid="history-error" role="alert">
+        {{ state.errorMessage || 'No se pudo cargar el historial.' }}
+      </p>
+    } @else {
+      <div class="table-wrapper" aria-live="polite">
+        <table
+          mat-table
+          [dataSource]="tableData"
+          class="operations-table"
+          aria-label="Tabla de operaciones registradas"
+        >
+          <!-- Fecha y hora -->
+          <ng-container matColumnDef="registeredAt">
+            <th mat-header-cell *matHeaderCellDef scope="col">Fecha y hora</th>
+            <td mat-cell *matCellDef="let op">
+              @if (isLoading) {
+                <span class="skeleton-bar" aria-hidden="true"></span>
+              } @else {
+                <time [dateTime]="op.registeredAt">{{ formatDate(op.registeredAt) }}</time>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Monto -->
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef scope="col">Monto</th>
+            <td mat-cell *matCellDef="let op">
+              @if (isLoading) {
+                <span class="skeleton-bar" aria-hidden="true"></span>
+              } @else {
+                {{ formatAmount(op.amount) }}
+              }
+            </td>
+          </ng-container>
+
+          <!-- Tipo de operación -->
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef scope="col">Tipo de operación</th>
+            <td mat-cell *matCellDef="let op">
+              @if (isLoading) {
+                <span class="skeleton-bar" aria-hidden="true"></span>
+              } @else {
+                {{ formatType(op.type) }}
+              }
+            </td>
+          </ng-container>
+
+          <!-- T014: Estado column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef scope="col">Estado</th>
+            <td mat-cell *matCellDef="let op">
+              @if (isLoading) {
+                <span class="skeleton-bar" aria-hidden="true"></span>
+              } @else {
+                {{ formatStatus(op.status) }}
+              }
+            </td>
+          </ng-container>
+
+          <!-- Acciones -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef scope="col">Acciones</th>
+            <td mat-cell *matCellDef="let op">
+              @if (!isLoading) {
+                <!-- T032/T033/T035/T036: disabled + tooltip + aria-label based on status -->
+                <button
+                  mat-icon-button
+                  data-testid="btn-edit-operation"
+                  [disabled]="op.status === 'CANCELLED'"
+                  [matTooltip]="op.status === 'CANCELLED' ? 'Operación anulada' : 'Editar operación'"
+                  [attr.aria-label]="op.status === 'CANCELLED' ? 'Operación anulada — no editable' : 'Editar operación'"
+                  (click)="op.status !== 'CANCELLED' && onEditClick(op, $any($event.currentTarget))"
+                >
+                  <mat-icon aria-hidden="true">edit</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <!-- T014: .operation-canceled class for 50-60% opacity on ANULADO rows -->
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns;"
+            data-testid="operation-item"
+            [class.row--skeleton]="isLoading"
+            [class.operation-canceled]="row.status === 'CANCELLED'"
+          ></tr>
+        </table>
+
+        @if (!isLoading && state.operations.length === 0) {
+          <p class="empty-history" data-testid="empty-history" role="status">
+            <mat-icon aria-hidden="true">inbox</mat-icon>
+            Aún no hay operaciones registradas.
+          </p>
+        }
+      </div>
+    }
+  </section>
+</div>

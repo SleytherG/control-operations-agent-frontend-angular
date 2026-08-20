@@ -1,0 +1,577 @@
+// ===== Audit Sessions Page — AgenteFlow Design System =====
+// Filter bar and table styles are kept pixel-perfect with users-page.component.scss
+
+.audit-page {
+  padding: var(--af-space-lg);
+  min-height: 100%;
+  background-color: var(--af-background);
+}
+
+.audit-page-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--af-space-lg);
+}
+
+// ─── Page Header ─────────────────────────────────────────────────────────────
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--af-space-md);
+
+  @media (min-width: 640px) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+}
+
+.page-header-text { flex: 1; min-width: 0; }
+
+.page-title {
+  font-family: var(--af-font-headline);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 36px;
+  letter-spacing: -0.02em;
+  color: var(--af-on-surface);
+  margin: 0 0 4px 0;
+}
+
+.page-subtitle {
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--af-on-surface-variant);
+  margin: 0;
+}
+
+// Outline export button — matches "Exportar Reporte" reference style (dashboard size)
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: var(--af-surface);
+  border: 1.5px solid var(--af-on-surface);
+  border-radius: 8px;
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--af-on-surface);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background-color: var(--af-on-surface);
+    color: var(--af-surface);
+  }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .material-symbols-outlined { font-size: 18px; }
+}
+
+// ─── Export warning banner ────────────────────────────────────────────────────
+.export-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  background-color: #fff8e1;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  font-family: var(--af-font-body);
+  font-size: 13px;
+  color: #6d4c00;
+
+  .material-symbols-outlined { font-size: 20px; flex-shrink: 0; }
+}
+
+// ─── Filters Bar — single row, same as control-operaciones reference ──────────
+.filters-bar {
+  background-color: var(--af-surface-container-lowest);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-wrap: nowrap;    // keep everything on ONE row (pixel-perfect with reference)
+  gap: 12px;
+  align-items: flex-end;
+  overflow-x: auto;     // scroll horizontally on very small screens rather than wrap
+}
+
+.filter-label {
+  display: block;
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--af-on-surface-variant);
+  margin-bottom: 6px;
+}
+
+.filter-select-group {
+  min-width: 160px;
+  flex-shrink: 0;
+
+  &.filter-select-group--sm {
+    min-width: 140px;
+  }
+
+  &.filter-select-group--date-range {
+    min-width: 200px;
+  }
+}
+
+// ─── Native select — homologated design matching the rest of the system ────────
+.audit-filter-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 36px 0 12px;
+  background-color: var(--af-surface);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 2px;
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--af-on-surface);
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'24' height%3D'24' viewBox%3D'0 0 24 24' fill%3D'none' stroke%3D'%2376777d' stroke-width%3D'2' stroke-linecap%3D'round' stroke-linejoin%3D'round'%3E%3Cpolyline points%3D'6 9 12 15 18 9'%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 1.1em;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  cursor: pointer;
+
+  &:focus {
+    border-color: var(--af-primary);
+    box-shadow: 0 0 0 1px var(--af-primary);
+  }
+}
+
+// ─── Angular Material date range picker — matches .filter-select style exactly ─
+
+.audit-date-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  background-color: var(--af-surface);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 2px;
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--af-on-surface);
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  &:focus-within {
+    border-color: var(--af-primary);
+    box-shadow: 0 0 0 1px var(--af-primary);
+  }
+
+  .filter-date-display {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    z-index: 2;
+    line-height: 1.5;
+  }
+}
+
+// Invisible overlay — same transparent pattern as in control-operaciones
+.audit-date-hidden-field {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 3;
+
+  .mat-mdc-text-field-wrapper,
+  .mdc-text-field {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    background: transparent !important;
+  }
+
+  .mat-mdc-form-field-flex { height: 100%; align-items: center; }
+  .mat-mdc-form-field-infix { padding: 0; min-height: auto; height: 100%; width: 100%; }
+  .mdc-notched-outline { display: none; }
+  .mat-mdc-form-field-subscript-wrapper { display: none; }
+  .mat-mdc-floating-label { display: none; }
+
+  .mat-mdc-icon-button {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+}
+
+.filter-select {
+  width: 100%;
+  padding: 8px 36px 8px 12px;
+  background-color: var(--af-surface);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 2px;
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--af-on-surface);
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'24' height%3D'24' viewBox%3D'0 0 24 24' fill%3D'none' stroke%3D'%2376777d' stroke-width%3D'2' stroke-linecap%3D'round' stroke-linejoin%3D'round'%3E%3Cpolyline points%3D'6 9 12 15 18 9'%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 1.1em;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  cursor: pointer;
+
+  &:focus {
+    border-color: var(--af-primary);
+    box-shadow: 0 0 0 1px var(--af-primary);
+  }
+
+}
+
+// ─── Filter action buttons (LIMPIAR + FILTRAR) — pinned to far right ──────────
+
+.filter-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;    // absorbs all remaining space → pins buttons to far right
+  align-self: flex-end; // aligns to input baseline (same 38px height)
+  flex-shrink: 0;
+  padding-bottom: 1px;  // fine-tune vertical alignment with labelled inputs
+}
+
+.btn-limpiar {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--af-on-surface);
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  white-space: nowrap;
+
+  &:hover { background-color: var(--af-surface-container-high); }
+}
+
+.btn-filtrar {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 2px;
+  background-color: var(--af-secondary);
+  color: var(--af-on-secondary);
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 150ms ease;
+  white-space: nowrap;
+
+  &:hover { opacity: 0.9; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ─── Data Table Card ──────────────────────────────────────────────────────────
+.table-card {
+  background-color: var(--af-surface-container-lowest);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table-header-row {
+  background-color: var(--af-surface-container-low);
+  border-bottom: 1px solid var(--af-outline-variant);
+}
+
+.th {
+  padding: 12px 16px;
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--af-on-surface-variant);
+  white-space: nowrap;
+}
+
+.table-row {
+  border-bottom: 1px solid var(--af-outline-variant);
+  transition: background-color 120ms ease;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background-color: var(--af-surface-bright); }
+}
+
+.td {
+  padding: 12px 16px;
+  vertical-align: middle;
+
+  &.td--empty {
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--af-on-surface-variant);
+
+    p {
+      margin: 8px 0 0 0;
+      font-family: var(--af-font-body);
+      font-size: 14px;
+    }
+  }
+}
+
+// User cell
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-initials {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--af-secondary-container);
+  color: var(--af-on-secondary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+
+  &.user-initials--admin {
+    background-color: var(--af-primary-container);
+    color: var(--af-on-primary-container);
+  }
+}
+
+.user-email {
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--af-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.role-text {
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--af-on-surface-variant);
+}
+
+.data-mono {
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--af-on-surface-variant);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.device-text {
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--af-on-surface-variant);
+  white-space: nowrap;
+}
+
+// Status badges (FR-017)
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &.status-badge--active {
+    background-color: var(--af-tertiary-fixed);
+    color: var(--af-on-tertiary-container);
+
+    .status-dot { background-color: var(--af-on-tertiary-container); }
+  }
+
+  &.status-badge--closed {
+    background-color: #e3f2fd;
+    color: #1565c0;
+  }
+
+  &.status-badge--expired {
+    background-color: #fff3e0;
+    color: #e65100;
+  }
+
+  &.status-badge--successful {
+    background-color: var(--af-surface-variant);
+    color: var(--af-on-surface-variant);
+  }
+
+  &.status-badge--failed {
+    background-color: var(--af-error-container);
+    color: var(--af-on-error-container);
+  }
+}
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.empty-icon {
+  font-size: 40px;
+  color: var(--af-outline-variant);
+}
+
+// Retry button
+.btn-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background-color: var(--af-primary);
+  border: none;
+  border-radius: 4px;
+  font-family: var(--af-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--af-on-primary);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+
+  &:hover { background-color: var(--af-primary-container); }
+  .material-symbols-outlined { font-size: 18px; }
+}
+
+// ─── Pagination — pixel-perfect match with users-page ─────────────────────────
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid var(--af-outline-variant);
+  background-color: var(--af-surface);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pagination-info {
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  color: var(--af-on-surface-variant);
+  margin: 0;
+
+  strong {
+    color: var(--af-on-surface);
+    font-weight: 500;
+  }
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  background-color: var(--af-surface);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 4px;
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--af-on-surface-variant);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 150ms ease;
+
+  &:hover:not(:disabled) { background-color: var(--af-surface-container-high); }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  &.page-btn--active {
+    background-color: var(--af-primary-fixed);
+    border-color: var(--af-primary);
+    color: var(--af-on-primary-fixed);
+    cursor: default;
+  }
+
+  .material-symbols-outlined { font-size: 18px; }
+}
+
+.page-ellipsis {
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  color: var(--af-on-surface-variant);
+  padding: 0 4px;
+}

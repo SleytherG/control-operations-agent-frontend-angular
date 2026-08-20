@@ -1,0 +1,262 @@
+<!-- Accessible live region for dynamic announcements -->
+<div
+  role="status"
+  aria-live="polite"
+  aria-atomic="true"
+  class="sr-only"
+  data-testid="aria-live-region"
+  id="aria-announcements"
+></div>
+
+<!-- ===== SUCCESS STATE ===== -->
+@if (showSuccess() && successData) {
+  <div class="reg-page">
+    <div class="reg-page-header">
+      <div>
+        <h1 class="reg-page-title">Registrar operacion</h1>
+        <p class="reg-page-subtitle">Ingrese los detalles de la operacion.</p>
+      </div>
+    </div>
+
+    <div class="reg-card reg-success-card">
+      <div class="reg-success-icon-wrap">
+        <mat-icon class="reg-success-icon">check_circle</mat-icon>
+      </div>
+      <h2 class="reg-success-title">Registro Exitoso</h2>
+      <p class="reg-success-subtitle">La operación ha sido registrada en el sistema central.</p>
+
+      <div class="reg-success-detail">
+        <div class="reg-success-detail-total">
+          <span class="reg-label-bold">Monto Total</span>
+          <span class="reg-success-amount">S/ {{ successData.amount }}</span>
+        </div>
+        <div class="reg-success-detail-grid">
+          <div class="reg-success-detail-item">
+            <span class="reg-label-bold">Código Interno</span>
+            <span class="reg-data-mono">{{ successData.internalCode }}</span>
+          </div>
+          <div class="reg-success-detail-item">
+            <span class="reg-label-bold">Hora</span>
+            <span class="reg-data-mono">{{ successData.time }}</span>
+          </div>
+          <div class="reg-success-detail-item">
+            <span class="reg-label-bold">Tipo</span>
+            <span class="reg-body-md">{{ successData.type }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="reg-success-actions">
+        <button
+          type="button"
+          class="btn-outline"
+          data-testid="btn-register-another"
+          (click)="onRegisterAnother()"
+        >
+          Registrar Otra
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="onViewDetail()"
+        >
+          Ver Detalle
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ===== FORM & PENDING-REVIEW STATES ===== -->
+@if (!showSuccess()) {
+  <div class="reg-page">
+    <div class="reg-page-header">
+      <div>
+        <h1 class="reg-page-title">Registrar operacion</h1>
+        <p class="reg-page-subtitle">Ingrese los detalles de la operacion.</p>
+      </div>
+    </div>
+
+    <!-- ===== PENDING REVIEW STATE ===== -->
+    @if (isPendingReview) {
+      <section
+        class="reg-card reg-pending-card"
+        aria-label="Confirmación pendiente"
+        role="region"
+      >
+        <h2 class="reg-pending-title">Confirmación pendiente</h2>
+        <p class="reg-pending-info">
+          Hay una confirmación pendiente de tipo
+          <strong>{{ formatType(state.rawType) }}</strong>
+          por monto <strong>{{ state.rawAmount }}</strong>.
+          La clave de idempotencia ha sido conservada.
+        </p>
+        @if (state.errorMessage) {
+          <p class="reg-error-banner" role="alert" aria-live="assertive">
+            <mat-icon class="reg-error-icon">error_outline</mat-icon>
+            {{ state.errorMessage }}
+          </p>
+        }
+        <div class="reg-pending-actions">
+          <button
+            type="button"
+            class="btn-primary"
+            data-testid="btn-retry"
+            [disabled]="isSubmitting"
+            (click)="onRetry()"
+            aria-label="Reintentar el registro con la misma confirmación"
+          >
+            <mat-icon>refresh</mat-icon>
+            Reintentar
+          </button>
+          <button
+            type="button"
+            class="btn-outline"
+            data-testid="btn-edit-new"
+            [disabled]="isSubmitting"
+            (click)="onEditNew()"
+            aria-label="Editar como nueva confirmación"
+          >
+            <mat-icon>edit</mat-icon>
+            Editar como nueva confirmación
+          </button>
+          <button
+            type="button"
+            class="btn-outline btn-danger"
+            data-testid="btn-discard"
+            [disabled]="isSubmitting"
+            (click)="onDiscard()"
+            aria-label="Descartar confirmación pendiente"
+          >
+            <mat-icon>delete_outline</mat-icon>
+            Descartar
+          </button>
+        </div>
+      </section>
+    }
+
+    <!-- ===== REGISTRATION FORM ===== -->
+    @if (!isPendingReview) {
+      <div class="reg-card" id="form-container">
+
+        <!-- Context Bar -->
+        <div class="reg-context-bar">
+          @if (state.errorMessage) {
+            <p class="reg-error-banner" role="alert" aria-live="assertive" data-testid="error-global">
+              <mat-icon class="reg-error-icon">error_outline</mat-icon>
+              {{ state.errorMessage }}
+            </p>
+          }
+        </div>
+
+        <form
+          [formGroup]="form"
+          (ngSubmit)="onSubmit()"
+          class="reg-form"
+          aria-label="Formulario de registro de operación"
+          novalidate
+          id="registration-form"
+        >
+
+          <!-- HERO INPUT: Monto -->
+          <div class="reg-field-full">
+            <label class="reg-label" for="amount">Monto de Operación</label>
+            <div
+              class="reg-amount-wrap"
+              [class.reg-amount-wrap--focused]="form.get('amount')?.touched && form.get('amount')?.invalid"
+            >
+              <span class="reg-amount-prefix">S/</span>
+              <input
+                id="amount"
+                class="reg-amount-input"
+                formControlName="amount"
+                data-testid="field-amount"
+                type="number"
+                inputmode="decimal"
+                autocomplete="off"
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                [attr.aria-describedby]="state.fieldErrors?.amount ? 'error-amount' : null"
+                required
+              />
+            </div>
+            @if (state.fieldErrors?.amount || (form.get('amount')?.invalid && form.get('amount')?.touched)) {
+              <p
+                id="error-amount"
+                class="reg-field-error"
+                data-testid="error-amount"
+                role="alert"
+              >
+                {{ state.fieldErrors?.amount || 'Ingrese un monto válido mayor que cero' }}
+              </p>
+            }
+          </div>
+
+          <!-- Tipo de Operación -->
+          <div class="reg-field-full">
+            <label class="reg-label" for="type">Tipo de Operación</label>
+            <div class="reg-select-wrapper">
+              <select
+                id="type"
+                class="reg-native-select"
+                formControlName="type"
+                data-testid="field-type"
+                [attr.aria-describedby]="state.fieldErrors?.type ? 'error-type' : null"
+              >
+                <option value="" disabled>Seleccione tipo...</option>
+                @if (opTypesLoading()) {
+                  <option disabled>Cargando tipos...</option>
+                } @else if (backendOpTypes().length > 0) {
+                  @for (opType of backendOpTypes(); track opType.id) {
+                    <option [value]="opType.name" data-testid="type-option">{{ opType.name }}</option>
+                  }
+                } @else {
+                  @for (opType of operationTypes; track opType) {
+                    <option [value]="opType" data-testid="type-option">{{ operationTypeLabels[opType] }}</option>
+                  }
+                }
+              </select>
+              <span class="reg-select-icon" aria-hidden="true">
+                <mat-icon>expand_more</mat-icon>
+              </span>
+            </div>
+            @if (state.fieldErrors?.type || (form.get('type')?.invalid && form.get('type')?.touched)) {
+              <p
+                id="error-type"
+                class="reg-field-error"
+                data-testid="error-type"
+                role="alert"
+              >
+                {{ state.fieldErrors?.type || 'Seleccione un tipo de operación' }}
+              </p>
+            }
+          </div>
+
+          <!-- Divider -->
+          <div class="reg-divider"></div>
+
+          <!-- Submit -->
+          <div class="reg-form-actions">
+            <button
+              type="submit"
+              class="btn-primary btn-submit"
+              data-testid="btn-submit"
+              [disabled]="isSubmitting || state.status === 'cleanup-error'"
+              aria-label="Confirmar registro de operación"
+            >
+              @if (isSubmitting) {
+                <mat-spinner diameter="20" aria-hidden="true"></mat-spinner>
+                <span class="sr-only">Registrando...</span>
+              } @else {
+                <mat-icon aria-hidden="true">check_circle</mat-icon>
+                REGISTRAR OPERACIÓN
+              }
+            </button>
+          </div>
+
+        </form>
+      </div>
+    }
+  </div>
+}

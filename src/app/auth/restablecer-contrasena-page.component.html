@@ -1,0 +1,188 @@
+<!-- RestablecerContrasenaPageComponent — pixel-perfect per mockup screen 18 -->
+<!-- Uses project design system: --af-* CSS custom properties + semantic class names -->
+
+<div class="reset-page">
+
+  <!-- ── Minimal Header ──────────────────────────────────────────────────── -->
+  <header class="reset-topbar">
+    <div class="reset-brand-row">
+      <span class="material-symbols-outlined reset-brand-icon">account_balance</span>
+      <h1 class="reset-brand-name">AgenteFlow</h1>
+    </div>
+    <button type="button" class="reset-help-btn" title="Ayuda">
+      <span class="material-symbols-outlined">help_outline</span>
+    </button>
+  </header>
+
+  <!-- ── Main Content ────────────────────────────────────────────────────── -->
+  <main class="reset-main">
+    <div class="reset-card">
+
+      <!-- Card Header -->
+      <div class="reset-card-header">
+        <div class="reset-icon-wrapper">
+          <span class="material-symbols-outlined">lock_reset</span>
+        </div>
+        <h2 class="reset-title">Restablecer Contraseña</h2>
+        <p class="reset-subtitle">
+          Por favor, ingrese su nueva contraseña para asegurar su cuenta de AgenteFlow.
+        </p>
+      </div>
+
+      <!-- Invalid token error (FR-015b) -->
+      @if (hasInvalidToken) {
+        <div class="error-banner" role="alert">
+          <span class="material-symbols-outlined">error</span>
+          <div class="error-body">
+            <p class="error-title-text">Enlace inválido o expirado</p>
+            <p>El enlace de recuperación no es válido o ha expirado.</p>
+            <a routerLink="/recuperar-contrasena" class="error-relink">
+              Solicitar un nuevo enlace
+            </a>
+          </div>
+        </div>
+      }
+
+      <!-- General error -->
+      @if (hasResetError) {
+        <div class="error-banner" role="alert">
+          <span class="material-symbols-outlined">error</span>
+          <div class="error-body">
+            <p>Ocurrió un error. Verifique que las contraseñas cumplan los requisitos.</p>
+          </div>
+        </div>
+      }
+
+      <!-- Form -->
+      <form class="reset-form" (ngSubmit)="onSubmit()">
+
+        <!-- Nueva contraseña -->
+        <div class="field-group">
+          <label class="field-label" for="new-password">Nueva contraseña</label>
+          <div class="field-input-wrapper">
+            <input
+              id="new-password"
+              name="newPassword"
+              [type]="newPasswordVisible() ? 'text' : 'password'"
+              class="field-input"
+              [(ngModel)]="newPassword"
+              placeholder="••••••••"
+              required
+              autocomplete="new-password"
+              [disabled]="isSubmitting"
+            />
+            <button
+              type="button"
+              class="field-toggle"
+              (click)="toggleNewPasswordVisibility()"
+              [disabled]="isSubmitting"
+              aria-label="Mostrar u ocultar contraseña"
+            >
+              <span class="material-symbols-outlined">
+                {{ newPasswordVisible() ? 'visibility' : 'visibility_off' }}
+              </span>
+            </button>
+          </div>
+
+          <!-- Password requirements panel (FR-018) -->
+          <div class="requirements-panel">
+            <p class="requirements-title">Requisitos de seguridad</p>
+
+            <div class="requirement-item">
+              <span class="material-symbols-outlined" [class]="rules.minLength ? 'met' : 'unmet'">
+                {{ rules.minLength ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              <span class="requirement-text">Al menos 8 caracteres</span>
+            </div>
+            <div class="requirement-item">
+              <span class="material-symbols-outlined" [class]="rules.hasUppercase ? 'met' : 'unmet'">
+                {{ rules.hasUppercase ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              <span class="requirement-text">Al menos una letra mayúscula</span>
+            </div>
+            <div class="requirement-item">
+              <span class="material-symbols-outlined" [class]="rules.hasNumber ? 'met' : 'unmet'">
+                {{ rules.hasNumber ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              <span class="requirement-text">Al menos un número</span>
+            </div>
+            <div class="requirement-item">
+              <span class="material-symbols-outlined" [class]="rules.hasSpecial ? 'met' : 'unmet'">
+                {{ rules.hasSpecial ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              <span class="requirement-text">Al menos un carácter especial (!&#64;#$%^&*)</span>
+            </div>
+
+            <!-- Strength meter (4 segments) -->
+            <div class="strength-meter">
+              <div class="strength-bar">
+                @for (seg of [1,2,3,4]; track seg) {
+                  <div class="strength-segment" [class.active]="seg <= strengthSegments"></div>
+                }
+              </div>
+              @if (strengthLabel) {
+                <p class="strength-label">Fuerza: {{ strengthLabel }}</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Confirmar nueva contraseña -->
+        <div class="field-group">
+          <label class="field-label" for="confirm-password">Confirmar nueva contraseña</label>
+          <div class="field-input-wrapper">
+            <input
+              id="confirm-password"
+              name="confirmPassword"
+              [type]="confirmPasswordVisible() ? 'text' : 'password'"
+              class="field-input"
+              [(ngModel)]="confirmPassword"
+              placeholder="••••••••"
+              required
+              autocomplete="new-password"
+              [disabled]="isSubmitting"
+            />
+            <button
+              type="button"
+              class="field-toggle"
+              (click)="toggleConfirmPasswordVisibility()"
+              [disabled]="isSubmitting"
+              aria-label="Mostrar u ocultar confirmación"
+            >
+              <span class="material-symbols-outlined">
+                {{ confirmPasswordVisible() ? 'visibility' : 'visibility_off' }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit button -->
+        <button type="submit" class="btn-submit" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <span class="material-symbols-outlined spinning">progress_activity</span>
+            <span>Actualizando...</span>
+          } @else {
+            <span class="material-symbols-outlined">update</span>
+            <span>Actualizar contraseña</span>
+          }
+        </button>
+
+        <!-- Back link -->
+        <a routerLink="/login" class="back-link">
+          Volver al inicio de sesión
+        </a>
+
+      </form>
+    </div>
+  </main>
+
+  <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+  <footer class="reset-footer">
+    <p class="footer-copy">© 2024 AgenteFlow Banking Systems. Internal Use Only.</p>
+    <div class="footer-links">
+      <a href="#" class="footer-link">Security Policy</a>
+      <a href="#" class="footer-link">Support</a>
+    </div>
+  </footer>
+
+</div>

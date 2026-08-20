@@ -1,0 +1,158 @@
+// ===== Session Expiry Modal — AgenteFlow Design System =====
+
+// ─── Overlay ─────────────────────────────────────────────────────────────────
+.session-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--af-space-md);
+  background-color: rgba(48, 48, 50, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+// ─── Modal Box ────────────────────────────────────────────────────────────────
+.session-modal {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--af-surface);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// ─── Body ─────────────────────────────────────────────────────────────────────
+.session-modal-body {
+  padding: var(--af-space-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--af-space-md);
+}
+
+// ─── Icon with pulse ──────────────────────────────────────────────────────────
+.session-modal-icon-wrapper {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: rgba(186, 26, 26, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--af-space-sm);
+}
+
+.session-modal-icon-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--af-error);
+  animation: modal-pulse 1.4s ease-out infinite;
+  opacity: 0.5;
+}
+
+@keyframes modal-pulse {
+  0%   { transform: scale(1);   opacity: 0.5; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.session-modal-icon {
+  font-size: 32px;
+  color: var(--af-error);
+}
+
+// ─── Text ─────────────────────────────────────────────────────────────────────
+.session-modal-title {
+  font-family: var(--af-font-headline);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--af-primary);
+  margin: 0;
+}
+
+.session-modal-description {
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  color: var(--af-on-surface-variant);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 380px;
+}
+
+// ─── Timer ────────────────────────────────────────────────────────────────────
+.session-modal-timer {
+  width: 100%;
+  background-color: var(--af-surface-container-low);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 8px;
+  padding: var(--af-space-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.session-modal-timer-label {
+  font-family: var(--af-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--af-secondary);
+}
+
+.session-modal-timer-value {
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--af-error);
+}
+
+// ─── Footer / Actions ─────────────────────────────────────────────────────────
+.session-modal-footer {
+  padding: var(--af-space-md) var(--af-space-lg);
+  background-color: var(--af-surface-container-lowest);
+  border-top: 1px solid var(--af-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--af-space-sm);
+}
+
+.session-modal-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 150ms ease, background-color 150ms ease;
+
+  &--secondary {
+    background-color: var(--af-surface);
+    border: 1px solid var(--af-outline);
+    color: var(--af-primary);
+
+    &:hover { background-color: var(--af-surface-container-low); }
+  }
+
+  &--primary {
+    background-color: var(--af-primary);
+    border: 1px solid transparent;
+    color: var(--af-on-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+    &:hover { opacity: 0.88; }
+  }
+}

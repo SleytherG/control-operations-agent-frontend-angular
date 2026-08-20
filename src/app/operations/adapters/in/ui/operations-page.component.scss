@@ -1,0 +1,205 @@
+@use '@angular/material' as mat;
+
+.operations-page {
+  padding-bottom: 2rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  color: #1565c0;
+}
+
+// ---- Form layout ----
+
+section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+h2 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.field-full-width {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+// Screen-reader-only utility
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ---- Submit button icon alignment ----
+
+button[type='submit'] {
+  .mat-icon {
+    vertical-align: middle;
+    margin-right: 0.5rem;
+  }
+}
+
+// ---- Error messages ----
+
+.error-message {
+  color: #c62828;
+  background: #ffebee;
+  border-left: 4px solid #c62828;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+// ---- Pending review ----
+
+.pending-review {
+  border-left: 4px solid #f57c00;
+  background: #fff3e0;
+
+  h2 {
+    color: #e65100;
+  }
+}
+
+.pending-info {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.pending-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+// ---- History section ----
+
+.history-section {
+  h2 {
+    margin-bottom: 0;
+  }
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.empty-history {
+  color: #616161;
+  font-style: italic;
+  padding: 1rem 0;
+}
+
+.history-error {
+  color: #c62828;
+  font-weight: 500;
+}
+
+// ---- Operations table ----
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.operations-table {
+  width: 100%;
+}
+
+// ---- Skeleton loading ----
+
+.skeleton-bar {
+  display: inline-block;
+  width: 80%;
+  height: 1rem;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+tr.row--skeleton {
+  pointer-events: none;
+}
+
+// T015: Canceled rows render at 55% opacity (FR-011)
+tr.operation-canceled {
+  opacity: 0.55;
+}
+
+// ---- Empty state ----
+
+.empty-history {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: #616161;
+  font-style: italic;
+  padding: 2rem 0;
+  text-align: center;
+
+  mat-icon {
+    font-size: 2rem;
+    height: 2rem;
+    width: 2rem;
+    opacity: 0.5;
+  }
+}
+
+// ---- Responsive reflow at 200% / 400% zoom ----
+
+@media (max-width: 480px) {
+  .pending-actions {
+    flex-direction: column;
+    align-items: stretch;
+
+    button {
+      width: 100%;
+    }
+  }
+
+}
+
+// ---- Forced-colors / high-contrast ----
+
+@media (forced-colors: active) {
+  .error-message {
+    border-left-color: ButtonText;
+  }
+
+  .pending-review {
+    border-left-color: ButtonText;
+  }
+}

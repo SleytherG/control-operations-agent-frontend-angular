@@ -1,0 +1,366 @@
+<!-- Roles y Permisos — Split-panel layout (uses roles-page.component.scss) -->
+<div class="roles-page" [class.mobile-config-active]="showConfigPanel()">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       LEFT PANEL — User list
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="user-list-panel">
+
+    <!-- Panel header: title + search + filters -->
+    <div class="panel-header">
+
+      <div class="panel-header-top">
+        <h2 class="panel-title">Usuarios del Sistema</h2>
+        <span class="users-count-badge">{{ facade.filteredUsers().length }} Total</span>
+      </div>
+
+      <!-- Search input -->
+      <div class="search-wrapper">
+        <span class="material-symbols-outlined search-icon" aria-hidden="true">search</span>
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Buscar por nombre, email o rol..."
+          (input)="onSearchInput($event)"
+        />
+      </div>
+
+      <!-- Role + Status filters -->
+      <div class="list-filters">
+        <select class="filter-chip" (change)="onRoleFilterChange($any($event.target).value)">
+          <option value="">Rol</option>
+          <option value="ADMIN">ADMIN</option>
+          <option value="OPERADOR">OPERADOR</option>
+        </select>
+        <select class="filter-chip" (change)="onStatusFilterChange($any($event.target).value)">
+          <option value="">Estado</option>
+          <option value="Activo">Activo</option>
+          <option value="Inactivo">Inactivo</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- User list body -->
+    <div class="user-list">
+
+      <!-- Loading state -->
+      <ng-container *ngIf="facade.state().listStatus === 'loading'">
+        <div class="user-list-empty">
+          <span class="material-symbols-outlined">progress_activity</span>
+          <p>Cargando usuarios...</p>
+        </div>
+      </ng-container>
+
+      <!-- Error state -->
+      <ng-container *ngIf="facade.state().listStatus === 'error'">
+        <div class="user-list-empty">
+          <span class="material-symbols-outlined">error_outline</span>
+          <p>{{ facade.state().error }}</p>
+          <button class="btn-select-all" type="button" (click)="facade.loadUsers()">Reintentar</button>
+        </div>
+      </ng-container>
+
+      <!-- Empty state (no results after filter) -->
+      <ng-container *ngIf="facade.state().listStatus === 'content' && facade.filteredUsers().length === 0">
+        <div class="user-list-empty">
+          <span class="material-symbols-outlined">search_off</span>
+          <p>No se encontraron usuarios con esos criterios.</p>
+        </div>
+      </ng-container>
+
+      <!-- User items -->
+      <button
+        *ngFor="let user of facade.filteredUsers()"
+        class="user-item"
+        [class.user-item--selected]="facade.state().selectedUserId === user.id"
+        type="button"
+        (click)="selectUser(user)"
+      >
+        <!-- Selected left border -->
+        <span
+          *ngIf="facade.state().selectedUserId === user.id"
+          class="selection-bar"
+          aria-hidden="true"
+        ></span>
+
+        <!-- Avatar -->
+        <div class="user-avatar-wrapper">
+          <div class="user-avatar user-avatar--placeholder" aria-hidden="true">
+            {{ user.initials }}
+          </div>
+          <span
+            class="online-dot"
+            [class.online-dot--online]="user.hasActiveSession"
+            [class.online-dot--offline]="!user.hasActiveSession"
+            aria-hidden="true"
+          ></span>
+        </div>
+
+        <!-- Name + Email -->
+        <div class="user-item-info">
+          <p class="user-item-name">{{ user.fullName }}</p>
+          <p class="user-item-email">{{ user.email }}</p>
+        </div>
+
+        <!-- Badges: role + Inactivo -->
+        <div class="user-item-badges">
+          <span
+            class="role-badge"
+            [class.role-badge--admin]="user.role === 'ADMIN'"
+            [class.role-badge--operador]="user.role === 'OPERADOR'"
+          >{{ user.role }}</span>
+          <span
+            *ngIf="!user.accountActive"
+            class="role-badge role-badge--inactive"
+          >Inactivo</span>
+        </div>
+      </button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       RIGHT PANEL — User configuration
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section
+    class="config-panel"
+    [class.config-panel--empty]="!facade.state().selectedUserId"
+  >
+
+    <!-- Mobile back button — only visible on small screens, always at top of config panel -->
+    <div class="mobile-back-bar">
+      <button class="btn-mobile-back" type="button" (click)="goBackToList()" aria-label="Volver a la lista">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+        Volver
+      </button>
+    </div>
+
+    <!-- Empty placeholder -->
+    <ng-container *ngIf="!facade.state().selectedUserId">
+      <span class="material-symbols-outlined empty-state-icon">manage_accounts</span>
+      <h3 class="empty-state-title">Selecciona un usuario</h3>
+      <p class="empty-state-desc">Haz clic en cualquier usuario de la lista para ver y gestionar su configuracion de rol y permisos.</p>
+    </ng-container>
+
+    <!-- User selected: full config panel -->
+    <ng-container *ngIf="facade.state().selectedUserId && selectedUser">
+
+      <!-- Header: avatar, name, ID, session status, revoke button -->
+      <div class="config-header">
+        <div class="config-user-identity">
+          <div class="config-avatar" aria-hidden="true">{{ selectedUser.initials }}</div>
+          <div class="config-user-info">
+            <h2 class="config-user-name">{{ selectedUser.fullName }}</h2>
+            <div class="config-user-meta">
+              <span class="user-id">ID: {{ selectedUser.id }}</span>
+              <span *ngIf="selectedUser.hasActiveSession" class="meta-dot" aria-hidden="true"></span>
+              <span *ngIf="selectedUser.hasActiveSession" class="session-status">
+                <span class="status-dot-sm status-dot-sm--online" aria-hidden="true"></span>
+                Sesion Activa
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          class="btn-revoke"
+          type="button"
+          [disabled]="!selectedUser.accountActive || facade.state().configStatus === 'revoking'"
+          (click)="onRevokeAccess()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">block</span>
+          Revocar Acceso
+        </button>
+      </div>
+
+      <!-- Loading config -->
+      <ng-container *ngIf="facade.state().configStatus === 'loading'">
+        <div class="user-list-empty" style="flex:1">
+          <span class="material-symbols-outlined">progress_activity</span>
+          <p>Cargando configuracion...</p>
+        </div>
+      </ng-container>
+
+      <!-- Scrollable canvas (config is loaded) -->
+      <div class="config-canvas" *ngIf="facade.state().configStatus !== 'loading'">
+
+        <!-- ── Rol del Sistema ── -->
+        <div class="config-section">
+          <div class="section-heading">
+            <h3 class="section-title">Rol del Sistema</h3>
+            <p class="section-desc">Define el nivel operativo primario del usuario. Afecta el acceso a la navegacion principal.</p>
+          </div>
+
+          <div class="role-cards-grid">
+
+            <!-- ADMIN card -->
+            <div
+              class="role-card"
+              [class.role-card--selected]="facade.draftRole() === 'ADMIN'"
+              role="button"
+              tabindex="0"
+              (click)="onRoleCardClick('ADMIN')"
+              (keyup.enter)="onRoleCardClick('ADMIN')"
+            >
+              <div class="role-card-content">
+                <div class="role-card-header">
+                  <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+                  <span class="role-card-name">ADMIN</span>
+                </div>
+                <p class="role-card-desc">Acceso completo a todas las configuraciones del sistema, gestion de usuarios y operaciones de liquidacion.</p>
+              </div>
+              <span
+                *ngIf="facade.draftRole() === 'ADMIN'"
+                class="material-symbols-outlined role-card-check"
+                style="font-variation-settings:'FILL' 1"
+                aria-hidden="true"
+              >check_circle</span>
+            </div>
+
+            <!-- OPERADOR card -->
+            <div
+              class="role-card"
+              [class.role-card--selected]="facade.draftRole() === 'OPERADOR'"
+              role="button"
+              tabindex="0"
+              (click)="onRoleCardClick('OPERADOR')"
+              (keyup.enter)="onRoleCardClick('OPERADOR')"
+            >
+              <div class="role-card-content">
+                <div class="role-card-header">
+                  <span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span>
+                  <span class="role-card-name">OPERADOR</span>
+                </div>
+                <p class="role-card-desc">Acceso estandar para el procesamiento transaccional diario. No puede modificar configuraciones del sistema.</p>
+              </div>
+              <span
+                *ngIf="facade.draftRole() === 'OPERADOR'"
+                class="material-symbols-outlined role-card-check"
+                style="font-variation-settings:'FILL' 1"
+                aria-hidden="true"
+              >check_circle</span>
+            </div>
+          </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ── Permisos Granulares ── -->
+        <div class="config-section">
+          <div class="section-heading-row">
+            <div class="section-heading">
+              <h3 class="section-title">Permisos Granulares</h3>
+              <p class="section-desc">Ajuste capacidades especificas dentro de los limites del rol seleccionado.</p>
+            </div>
+            <button class="btn-select-all" type="button" (click)="onSelectAll()">Seleccionar todo</button>
+          </div>
+
+          <div class="permissions-grid">
+
+            <!-- OPERACIONES -->
+            <div class="permission-category">
+              <div class="category-header">
+                <span class="material-symbols-outlined category-icon" aria-hidden="true">sync_alt</span>
+                <h4 class="category-title">Operaciones</h4>
+              </div>
+              <div class="category-permissions">
+                <label
+                  *ngFor="let perm of permissionsByCategory['OPERACIONES']"
+                  class="permission-item"
+                >
+                  <input
+                    class="perm-checkbox"
+                    type="checkbox"
+                    [checked]="isPermissionGranted(perm.id)"
+                    (change)="onPermissionToggle(perm.id)"
+                  />
+                  <div class="perm-info">
+                    <span class="perm-label">{{ perm.label }}</span>
+                    <span class="perm-desc">{{ perm.description }}</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- SEGURIDAD -->
+            <div class="permission-category">
+              <div class="category-header">
+                <span class="material-symbols-outlined category-icon" aria-hidden="true">security</span>
+                <h4 class="category-title">Seguridad</h4>
+              </div>
+              <div class="category-permissions">
+                <label
+                  *ngFor="let perm of permissionsByCategory['SEGURIDAD']"
+                  class="permission-item"
+                >
+                  <input
+                    class="perm-checkbox"
+                    type="checkbox"
+                    [checked]="isPermissionGranted(perm.id)"
+                    (change)="onPermissionToggle(perm.id)"
+                  />
+                  <div class="perm-info">
+                    <span class="perm-label">{{ perm.label }}</span>
+                    <span class="perm-desc">{{ perm.description }}</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- REPORTES — full width -->
+            <div class="permission-category permission-category--wide">
+              <div class="category-header">
+                <span class="material-symbols-outlined category-icon" aria-hidden="true">bar_chart</span>
+                <h4 class="category-title">Reportes</h4>
+              </div>
+              <div class="category-permissions">
+                <label
+                  *ngFor="let perm of permissionsByCategory['REPORTES']"
+                  class="permission-item"
+                >
+                  <input
+                    class="perm-checkbox"
+                    type="checkbox"
+                    [checked]="isPermissionGranted(perm.id)"
+                    (change)="onPermissionToggle(perm.id)"
+                  />
+                  <div class="perm-info">
+                    <span class="perm-label">{{ perm.label }}</span>
+                    <span class="perm-desc">{{ perm.description }}</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+          </div><!-- /permissions-grid -->
+        </div><!-- /config-section Permisos -->
+
+        <!-- Error/success feedback -->
+        <div *ngIf="facade.state().saveError" class="form-error-banner" style="padding:10px 14px;border-radius:6px;background:var(--af-error-container);color:var(--af-on-error-container);font-size:13px">
+          {{ facade.state().saveError }}
+        </div>
+        <div *ngIf="facade.state().saveSuccess" class="form-success-banner" style="padding:10px 14px;border-radius:6px;background:#d4edda;color:#155724;font-size:13px">
+          Configuracion guardada exitosamente.
+        </div>
+
+      </div><!-- /config-canvas -->
+
+    </ng-container><!-- /user selected -->
+
+    <!-- Footer: Descartar + Guardar (always visible when user is selected) -->
+    <div class="config-footer" *ngIf="facade.state().selectedUserId">
+      <button class="btn-discard" type="button" (click)="onDiscardChanges()">
+        Descartar Cambios
+      </button>
+      <button
+        class="btn-save-config"
+        type="button"
+        [disabled]="facade.state().configStatus === 'saving'"
+        (click)="onSaveConfiguration()"
+      >
+        {{ facade.state().configStatus === 'saving' ? 'Guardando...' : 'Guardar Configuracion' }}
+      </button>
+    </div>
+
+  </section><!-- /config-panel -->
+
+</div><!-- /roles-page -->

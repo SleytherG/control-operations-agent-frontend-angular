@@ -1,0 +1,73 @@
+<!-- Session Expiration Dialog -->
+@if (visible) {
+  <!-- Backdrop -->
+  <div
+    class="dialog-backdrop"
+    @backdropFade
+    (click)="onClose()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Modal Box -->
+  <div
+    class="dialog-container"
+    @dialogScale
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="session-dialog-title"
+    aria-describedby="session-dialog-desc"
+  >
+    <!-- Content -->
+    <div class="dialog-body">
+
+      <!-- Warning Icon -->
+      <div class="icon-wrapper" [class.icon-wrapper--urgent]="isUrgent" aria-hidden="true">
+        <div class="icon-pulse-ring"></div>
+        <span class="material-symbols-outlined dialog-icon">timer_off</span>
+      </div>
+
+      <!-- Heading -->
+      <h2 class="dialog-title" id="session-dialog-title">
+        Tu sesión está por finalizar
+      </h2>
+
+      <!-- Description -->
+      <p class="dialog-desc" id="session-dialog-desc">
+        Por razones de seguridad, tu sesión se cerrará automáticamente debido a inactividad.
+        ¿Deseas continuar operando?
+      </p>
+
+      <!-- Countdown Timer -->
+      <div class="countdown-box" [class.countdown-box--urgent]="isUrgent" aria-live="polite" aria-atomic="true">
+        <span class="countdown-label">Tiempo restante</span>
+        <span
+          class="countdown-value"
+          [class.countdown-value--urgent]="isUrgent"
+          aria-label="Tiempo restante: {{ formattedTime }}"
+        >{{ formattedTime }}</span>
+      </div>
+
+    </div>
+
+    <!-- Actions Footer -->
+    <div class="dialog-footer">
+      <button
+        class="btn-close-session"
+        type="button"
+        (click)="onClose()"
+        aria-label="Cerrar sesión ahora"
+      >
+        Cerrar sesión
+      </button>
+      <button
+        class="btn-continue-session"
+        type="button"
+        (click)="onContinue()"
+        aria-label="Continuar la sesión activa"
+      >
+        Continuar sesión
+      </button>
+    </div>
+  </div>
+}

@@ -1,0 +1,133 @@
+<div class="charts-page">
+
+  <h1 class="page-title">Gráficos de operaciones</h1>
+
+  <!-- ===== FILTER PANEL (FR-005, FR-007, FR-008, FR-009, FR-013) ===== -->
+  <section class="filter-panel" aria-label="Filtros de fecha">
+    <div class="filter-row">
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Desde</mat-label>
+        <input
+          matInput
+          [matDatepicker]="fromPickerRef"
+          [formControl]="fromControl"
+          placeholder="DD/MM/AAAA"
+          data-testid="input-from"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="fromPickerRef" [disabled]="isLoading()"></mat-datepicker-toggle>
+        <mat-datepicker #fromPickerRef></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Hasta</mat-label>
+        <input
+          matInput
+          [matDatepicker]="toPickerRef"
+          [formControl]="toControl"
+          placeholder="DD/MM/AAAA"
+          data-testid="input-to"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="toPickerRef" [disabled]="isLoading()"></mat-datepicker-toggle>
+        <mat-datepicker #toPickerRef></mat-datepicker>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button
+          mat-flat-button
+          (click)="onApply()"
+          [disabled]="isLoading()"
+          data-testid="btn-apply"
+          aria-label="Aplicar filtro de fechas"
+        >
+          Aplicar
+        </button>
+        <button
+          mat-stroked-button
+          (click)="onClear()"
+          [disabled]="isLoading()"
+          data-testid="btn-clear"
+          aria-label="Limpiar filtros"
+        >
+          Limpiar
+        </button>
+      </div>
+    </div>
+
+    @if (rangeError()) {
+      <p class="range-error" role="alert" data-testid="range-error">{{ rangeError() }}</p>
+    }
+  </section>
+
+  <!-- ===== CHARTS GRID ===== -->
+  <div class="charts-grid">
+
+    <!-- Bar chart: Operations by date (FR-002) -->
+    <section class="chart-card" aria-label="Operaciones por fecha">
+      <h2 class="chart-title">Operaciones por fecha</h2>
+
+      @if (isLoading()) {
+        <!-- FR-013: skeleton loading -->
+        <div class="skeleton-bar chart-skeleton" aria-hidden="true" data-testid="skeleton-bar"></div>
+      } @else if (isError()) {
+        <!-- FR-014: error + retry -->
+        <div class="error-state" role="alert" data-testid="chart-error">
+          <mat-icon aria-hidden="true" class="error-icon">error_outline</mat-icon>
+          <p>{{ errorMessage() }}</p>
+          <button mat-stroked-button (click)="onRetry()" data-testid="btn-retry">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+        </div>
+      } @else if (isEmpty()) {
+        <!-- FR-010: empty state -->
+        <p class="empty-state" role="status" data-testid="empty-state">
+          <mat-icon aria-hidden="true">inbox</mat-icon>
+          No hay operaciones para el período seleccionado.
+        </p>
+      } @else {
+        <div class="chart-container">
+          <canvas
+            #barCanvas
+            aria-label="Gráfico de barras: cantidad de operaciones por fecha"
+          ></canvas>
+        </div>
+      }
+    </section>
+
+    <!-- Doughnut chart: Operations by type (FR-003) -->
+    <section class="chart-card" aria-label="Operaciones por tipo">
+      <h2 class="chart-title">Operaciones por tipo</h2>
+
+      @if (isLoading()) {
+        <!-- FR-013: skeleton loading -->
+        <div class="skeleton-bar chart-skeleton" aria-hidden="true" data-testid="skeleton-doughnut"></div>
+      } @else if (isError()) {
+        <!-- FR-014: error state -->
+        <div class="error-state" role="alert">
+          <mat-icon aria-hidden="true" class="error-icon">error_outline</mat-icon>
+          <p>{{ errorMessage() }}</p>
+          <button mat-stroked-button (click)="onRetry()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+        </div>
+      } @else if (isEmpty()) {
+        <!-- FR-010: empty state -->
+        <p class="empty-state" role="status">
+          <mat-icon aria-hidden="true">inbox</mat-icon>
+          No hay operaciones para el período seleccionado.
+        </p>
+      } @else {
+        <div class="chart-container">
+          <canvas
+            #doughnutCanvas
+            aria-label="Gráfico de dona: distribución de operaciones por tipo"
+          ></canvas>
+        </div>
+      }
+    </section>
+
+  </div><!-- /charts-grid -->
+
+</div><!-- /charts-page -->

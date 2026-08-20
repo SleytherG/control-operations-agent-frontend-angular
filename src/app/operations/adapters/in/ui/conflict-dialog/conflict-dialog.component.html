@@ -1,0 +1,30 @@
+<h2 mat-dialog-title id="conflict-dialog-title">
+  <mat-icon aria-hidden="true" class="warning-icon">warning</mat-icon>
+  Operación modificada
+</h2>
+
+<mat-dialog-content>
+  <p data-testid="conflict-dialog-message">
+    Esta operación ya fue modificada por otro operador mientras la editabas.
+  </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-stroked-button
+    data-testid="conflict-btn-cancel"
+    (click)="onCancel()"
+    aria-label="Cancelar y volver a la tabla"
+  >
+    Cancelar
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    data-testid="conflict-btn-reedit"
+    (click)="onReedit()"
+    aria-label="Re-editar con los datos más recientes"
+  >
+    Re-editar
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,345 @@
+// ===== Primer Inicio Cambio Contraseña Modal — AgenteFlow Design System =====
+// Replaces Tailwind utility classes with AgenteFlow CSS custom properties.
+// All class names are prefixed "pccc-" (primer-cambio-contrasena-component).
+
+// ─── Host ─────────────────────────────────────────────────────────────────────
+:host {
+  display: contents;
+}
+
+// ─── Overlay ──────────────────────────────────────────────────────────────────
+.pccc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+// ─── Card ─────────────────────────────────────────────────────────────────────
+.pccc-card {
+  background-color: var(--af-surface-container-lowest);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.24);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: pccc-fade-in 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes pccc-fade-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+.pccc-header {
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid var(--af-outline-variant);
+  background-color: var(--af-surface-container-low);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.pccc-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: var(--af-primary-container);
+  color: var(--af-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.pccc-icon {
+  font-size: 26px;
+}
+
+.pccc-brand {
+  font-family: var(--af-font-headline);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--af-primary);
+  margin: 0;
+}
+
+.pccc-title {
+  font-family: var(--af-font-headline);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--af-on-surface);
+  margin: 0;
+}
+
+.pccc-desc {
+  font-family: var(--af-font-body);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--af-on-surface-variant);
+  margin: 4px 0 0 0;
+  max-width: 380px;
+}
+
+// ─── Body ─────────────────────────────────────────────────────────────────────
+.pccc-body {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  overflow-y: auto;
+  max-height: calc(100vh - 280px);
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--af-outline-variant);
+    border-radius: 4px;
+  }
+}
+
+// ─── Error banner ─────────────────────────────────────────────────────────────
+.pccc-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  background-color: var(--af-error-container);
+  border-radius: 8px;
+  font-family: var(--af-font-body);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--af-on-error-container);
+}
+
+.pccc-error-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+// ─── Steps ────────────────────────────────────────────────────────────────────
+.pccc-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pccc-step-label {
+  font-family: var(--af-font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--af-primary);
+  cursor: default;
+}
+
+.pccc-step-hint {
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  color: var(--af-on-surface-variant);
+  margin: 0;
+}
+
+// ─── Input wrapper ────────────────────────────────────────────────────────────
+.pccc-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pccc-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 44px 0 12px;
+  background-color: var(--af-surface);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 6px;
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--af-on-surface);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+
+  &::placeholder { color: var(--af-outline); }
+
+  &:focus {
+    border-color: var(--af-primary);
+    box-shadow: 0 0 0 2px rgba(var(--af-primary-rgb, 26, 55, 166), 0.15);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--af-error);
+    box-shadow: 0 0 0 2px rgba(var(--af-error-rgb, 186, 26, 26), 0.12);
+  }
+}
+
+.pccc-visibility-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--af-on-surface-variant);
+  border-radius: 4px;
+  padding: 0;
+  transition: color 150ms ease, background-color 150ms ease;
+
+  &:hover {
+    color: var(--af-primary);
+    background-color: var(--af-surface-container-high);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--af-primary);
+    outline-offset: 2px;
+  }
+
+  .material-symbols-outlined { font-size: 20px; }
+}
+
+// ─── Requirements list ────────────────────────────────────────────────────────
+.pccc-requirements {
+  list-style: none;
+  margin: 2px 0 0 0;
+  padding: 12px 14px;
+  background-color: var(--af-surface-container-low);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pccc-req {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--af-font-body);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  color: var(--af-on-surface-variant);
+  transition: color 150ms ease;
+
+  &.pccc-req--met {
+    color: var(--af-on-tertiary-container, #009668);
+
+    .pccc-req-icon {
+      color: var(--af-on-tertiary-container, #009668);
+    }
+  }
+}
+
+.pccc-req-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  color: var(--af-outline);
+  transition: color 150ms ease;
+}
+
+// ─── Field-level error ────────────────────────────────────────────────────────
+.pccc-field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--af-font-body);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--af-error);
+  margin: 2px 0 0 0;
+}
+
+.pccc-field-error-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
+.pccc-footer {
+  padding: 16px 28px 20px;
+  border-top: 1px solid var(--af-outline-variant);
+  background-color: var(--af-surface-container-low);
+  flex-shrink: 0;
+}
+
+.pccc-submit {
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 24px;
+  background-color: var(--af-primary);
+  border: none;
+  border-radius: 8px;
+  font-family: var(--af-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--af-on-primary);
+  cursor: pointer;
+  transition: background-color 150ms ease, opacity 150ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+
+  &:hover:not(:disabled) {
+    background-color: var(--af-primary-container);
+    color: var(--af-on-primary-fixed);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--af-primary);
+    outline-offset: 3px;
+  }
+
+  .material-symbols-outlined { font-size: 20px; }
+}
+
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+.pccc-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: pccc-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pccc-spin {
+  to { transform: rotate(360deg); }
+}

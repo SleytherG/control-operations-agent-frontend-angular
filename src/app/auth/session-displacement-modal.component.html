@@ -1,0 +1,41 @@
+<!-- Session Displacement Modal (spec 017, FR-004, FR-016) -->
+<!-- Rendered at AppComponent root — persists across page navigation -->
+<div class="displacement-backdrop" @backdropFade>
+  <div class="displacement-dialog" @dialogScale role="alertdialog"
+       aria-labelledby="displacement-title" aria-describedby="displacement-body"
+       aria-modal="true">
+
+    <!-- Icon -->
+    <div class="displacement-icon-wrap" aria-hidden="true">
+      <span class="material-symbols-outlined displacement-icon">device_unknown</span>
+    </div>
+
+    <!-- Title -->
+    <h2 id="displacement-title" class="displacement-title">
+      Sesión iniciada en otro dispositivo
+    </h2>
+
+    <!-- Body — FR-016 element (1): another device signed in with same credentials -->
+    <p id="displacement-body" class="displacement-body">
+      Iniciaste sesión desde otro dispositivo con las mismas credenciales.
+      <!-- FR-016 element (2): countdown seconds remaining -->
+      Esta sesión se cerrará automáticamente en
+      <strong class="displacement-countdown"
+              [class.displacement-countdown--urgent]="remainingSeconds <= 3">
+        {{ remainingSeconds }}
+      </strong>
+      {{ remainingSeconds === 1 ? 'segundo' : 'segundos' }}.
+    </p>
+
+    <!-- FR-008: acknowledgment button — closes session immediately -->
+    <button
+      class="displacement-btn"
+      type="button"
+      (click)="acknowledge()"
+      aria-label="Entendido — cerrar sesión ahora"
+    >
+      Entendido
+    </button>
+
+  </div>
+</div>

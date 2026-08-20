@@ -1,0 +1,32 @@
+.warning-icon {
+  vertical-align: middle;
+  margin-right: 0.5rem;
+  color: #f57c00;
+}
+
+h2[mat-dialog-title] {
+  display: flex;
+  align-items: center;
+}
+
+// ===== Responsive (T024 — FR-012, SC-006, Decision 10) =====
+
+@media (max-width: 767px) {
+  // Dialog content scrollable internally (max-height: 90vh — Decision 10)
+  // CDK overlay pane width handled globally in styles.scss (T022)
+  ::ng-deep mat-dialog-content {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  // Action buttons stacked and full-width with 48px min touch target
+  ::ng-deep mat-dialog-actions {
+    flex-direction: column;
+    gap: 8px;
+
+    button {
+      width: 100%;
+      min-height: 48px;
+    }
+  }
+}

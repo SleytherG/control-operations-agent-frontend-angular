@@ -1,0 +1,1085 @@
+// ── Design tokens (aligned with mockup palette) ──────────────────────────────
+// Colors derived from the Tailwind config in the mockup spec.
+
+$color-primary:            #1b1b1d;      // on-background / near-black text
+$color-surface:            #fcf8fa;      // surface
+$color-surface-lowest:     #ffffff;      // surface-container-lowest
+$color-surface-low:        #f6f3f5;      // surface-container-low
+$color-surface-container:  #f0edef;      // surface-container
+$color-outline-variant:    #c6c6cd;      // outline-variant (borders)
+$color-outline:            #76777d;      // outline
+$color-on-surface:         #1b1b1d;      // on-surface
+$color-on-surface-variant: #45464d;      // on-surface-variant (muted)
+$color-secondary-container:#d0e1fb;      // secondary-container
+$color-on-secondary:       #54647a;      // on-secondary-container
+$color-error:              #ba1a1a;      // error
+$color-error-container:    #ffdad6;      // error-container
+$color-on-error-container: #93000a;      // on-error-container
+
+// Status chip colors
+$chip-completed-bg:    rgba(0, 33, 19, 0.10);  // tertiary-container / 10%
+$chip-completed-text:  #005236;                 // on-tertiary-fixed-variant
+$chip-completed-dot:   #002113;                 // tertiary-container
+$chip-cancelled-bg:    #ffdad6;                 // error-container
+$chip-cancelled-text:  #93000a;                 // on-error-container
+$chip-cancelled-dot:   #ba1a1a;                 // error
+$chip-pending-bg:      #d0e1fb;                 // secondary-container
+$chip-pending-text:    #54647a;                 // on-secondary-container
+$chip-pending-dot:     #505f76;                 // secondary
+
+// Typography
+$font-mono:   'Inter', monospace;
+$font-label:  'Inter', sans-serif;
+$font-body:   'Inter', sans-serif;
+
+// ── Page shell ────────────────────────────────────────────────────────────────
+
+.history-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// ── Page header ───────────────────────────────────────────────────────────────
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-title {
+  font-family: $font-body;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: $color-primary;
+  margin: 0 0 4px;
+}
+
+.page-subtitle {
+  font-family: $font-body;
+  font-size: 14px;
+  line-height: 20px;
+  color: $color-on-surface-variant;
+  margin: 0;
+}
+
+// ── Filter bar ────────────────────────────────────────────────────────────────
+
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-end;
+  padding: 16px;
+  background: $color-surface-lowest;
+  border: 1px solid $color-outline-variant;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    width: auto;
+    flex: 1 1 180px;
+    max-width: 220px;
+  }
+}
+
+.filter-label {
+  font-family: $font-label;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: $color-on-surface-variant;
+}
+
+// ── Date range picker ─────────────────────────────────────────────────────────
+// Single trigger + hidden Material date range field — same pattern as audit-sessions.
+
+// Single date-range group is slightly wider than a single date field
+.filter-group--date-range {
+  @media (min-width: 768px) {
+    flex: 1 1 200px;
+    max-width: 240px;
+  }
+}
+
+// Visible trigger: looks like a filter-input, click opens the date range picker
+.hist-date-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  background: $color-surface;
+  border: 1px solid $color-outline-variant;
+  border-radius: 2px;
+  font-family: $font-body;
+  font-size: 14px;
+  color: $color-on-surface;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+
+  &:focus-within {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+  }
+
+  .hist-date-display {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    z-index: 2;
+    line-height: 1.5;
+  }
+}
+
+// Fully transparent overlay that drives the Material picker — visually invisible
+.hist-date-hidden-field {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 3;
+
+  .mat-mdc-text-field-wrapper,
+  .mdc-text-field {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    background: transparent !important;
+  }
+
+  .mat-mdc-form-field-flex { height: 100%; align-items: center; }
+  .mat-mdc-form-field-infix { padding: 0; min-height: auto; height: 100%; width: 100%; }
+  .mdc-notched-outline { display: none; }
+  .mat-mdc-form-field-subscript-wrapper { display: none; }
+  .mat-mdc-floating-label { display: none; }
+
+  .mat-mdc-icon-button {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+}
+
+// ── Material select filter styling ───────────────────────────────────────────
+// Makes mat-form-field look like the native filter-input/filter-select style.
+
+.mat-filter-field {
+  width: 100%;
+  // Remove the default large bottom margin from subscript
+  --mat-form-field-container-height: 38px;
+  --mat-form-field-container-vertical-padding: 6px;
+
+  // Match filter-input border radius and background
+  .mat-mdc-text-field-wrapper {
+    background: $color-surface;
+    border-radius: 6px;
+  }
+
+  // Outline colour to match filter-input
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: $color-outline-variant !important;
+  }
+
+  &:hover .mdc-notched-outline__leading,
+  &:hover .mdc-notched-outline__notch,
+  &:hover .mdc-notched-outline__trailing {
+    border-color: $color-primary !important;
+  }
+
+  // Font style
+  .mat-mdc-select-value {
+    font-family: $font-body;
+    font-size: 14px;
+    color: $color-on-surface;
+  }
+
+  .mat-mdc-select-placeholder {
+    color: $color-on-surface-variant;
+  }
+}
+
+.filter-input,
+.filter-select {
+  font-family: $font-body;
+  font-size: 14px;
+  line-height: 20px;
+  color: $color-on-surface;
+  background: $color-surface;
+  border: 1px solid $color-outline-variant;
+  border-radius: 2px;
+  padding: 8px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.select-wrapper {
+  position: relative;
+
+  .filter-select {
+    appearance: none;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+
+  .select-icon {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: $color-on-surface-variant;
+    display: flex;
+    align-items: center;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+    }
+  }
+}
+
+.filter-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  justify-content: flex-end;
+  width: 100%;
+  margin-left: auto;
+
+  @media (min-width: 768px) {
+    width: auto;
+    flex: 0 0 auto;
+    align-self: flex-end;
+  }
+}
+
+// ── Filter action buttons — pixel-perfect match with audit-sessions reference ──
+
+.btn-limpiar {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid $color-outline-variant;
+  border-radius: 2px;
+  background: transparent;
+  color: $color-on-surface;
+  font-family: $font-label;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease;
+
+  &:hover { background-color: $color-surface-container; }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.btn-filtrar {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 2px;
+  background-color: $color-secondary-container; // #d0e1fb — matches --af-secondary fallback
+  color: $color-on-secondary;                   // #54647a
+  font-family: $font-label;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 150ms ease;
+
+  // Use CSS variable so the button stays aligned with var(--af-secondary) across pages
+  background-color: var(--af-secondary, #505f76);
+  color: var(--af-on-secondary, #ffffff);
+
+  &:hover { opacity: 0.9; }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+// ── Table card ────────────────────────────────────────────────────────────────
+
+.table-card {
+  background: $color-surface-lowest;
+  border: 1px solid $color-outline-variant;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+// ── Data table ────────────────────────────────────────────────────────────────
+
+.ops-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  table-layout: auto;
+
+  // Header row
+  thead tr {
+    background: $color-surface-low;
+    border-bottom: 1px solid $color-outline-variant;
+  }
+
+  thead th {
+    padding: 8px 12px;
+    font-family: $font-label;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: $color-on-surface-variant;
+    white-space: nowrap;
+    text-align: left;
+
+    &.col-right  { text-align: right; }
+    &.col-center { text-align: center; }
+  }
+
+  // Body rows
+  tbody tr {
+    border-bottom: 1px solid $color-outline-variant;
+    transition: background 0.1s ease;
+
+    &:last-child { border-bottom: none; }
+
+    &:hover { background: $color-surface-low; }
+
+    &.row-cancelled td {
+      opacity: 0.6;
+    }
+
+    &.row-skeleton {
+      pointer-events: none;
+    }
+  }
+
+  tbody td {
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 20px;
+    color: $color-on-surface;
+    vertical-align: middle;
+
+    &.col-right  { text-align: right; }
+    &.col-center { text-align: center; }
+  }
+}
+
+// ── Cell variants ─────────────────────────────────────────────────────────────
+
+.cell-mono {
+  font-family: $font-mono;
+  font-size: 14px;
+  font-weight: 500;
+  color: $color-on-surface;
+}
+
+.cell-muted {
+  color: $color-on-surface-variant;
+}
+
+.cell-body {
+  font-family: $font-body;
+  font-size: 12px;
+  color: $color-on-surface;
+}
+
+.cell-amount {
+  font-weight: 600;
+  color: $color-primary;
+}
+
+// ── Status chips ──────────────────────────────────────────────────────────────
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: $font-label;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &--completed {
+    background: $chip-completed-bg;
+    color: $chip-completed-text;
+    .chip-dot { background: $chip-completed-dot; }
+  }
+
+  &--cancelled {
+    background: $chip-cancelled-bg;
+    color: $chip-cancelled-text;
+    .chip-dot { background: $chip-cancelled-dot; }
+  }
+
+  &--pending {
+    background: $chip-pending-bg;
+    color: $chip-pending-text;
+    .chip-dot { background: $chip-pending-dot; }
+  }
+}
+
+.chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+// ── Action buttons ────────────────────────────────────────────────────────────
+
+.action-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.action-btn {
+  // Keep Angular Material mat-icon-button sizing but re-color
+
+  &--view {
+    color: $color-on-surface-variant !important;
+
+    &:hover:not([disabled]) {
+      background: $color-surface-low !important;
+      color: $color-primary !important;
+    }
+  }
+
+  &--edit {
+    color: $color-primary !important;
+
+    &:hover:not([disabled]) {
+      background: $color-surface-low !important;
+    }
+  }
+
+  &--cancel {
+    color: $color-error !important;
+
+    &:hover:not([disabled]) {
+      background: rgba(186, 26, 26, 0.08) !important;
+    }
+  }
+
+  &[disabled] {
+    opacity: 0.38;
+  }
+}
+
+// ── Skeleton loading ──────────────────────────────────────────────────────────
+// .skeleton-bar base styles are in global styles.scss (shared with charts-page)
+
+.skeleton-bar--short {
+  width: 50%;
+}
+
+// ── Empty / error states ──────────────────────────────────────────────────────
+
+.empty-row {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: $color-on-surface-variant;
+
+  mat-icon {
+    display: block;
+    margin: 0 auto 0.5rem;
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+    opacity: 0.45;
+  }
+
+  span {
+    font-style: italic;
+    font-size: 14px;
+  }
+}
+
+.history-error {
+  padding: 1.5rem;
+  color: $color-error;
+  font-weight: 500;
+}
+
+// ── Pagination footer ─────────────────────────────────────────────────────────
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid $color-outline-variant;
+  background: $color-surface-lowest;
+}
+
+.pagination-info {
+  font-family: $font-body;
+  font-size: 12px;
+  line-height: 16px;
+  color: $color-on-surface-variant;
+  margin: 0;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 4px;
+}
+
+// ── Cancel error toast ────────────────────────────────────────────────────────
+
+.cancel-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: $color-primary;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-family: $font-body;
+  font-size: 14px;
+  font-weight: 400;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  white-space: nowrap;
+}
+
+// ── Overlay backdrop ──────────────────────────────────────────────────────────
+
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(2px);
+  z-index: 200;
+}
+
+// ── Edit Side Panel ───────────────────────────────────────────────────────────
+
+.side-panel {
+  position: fixed;
+  inset-block: 0;
+  right: 0;
+  width: 100%;
+  max-width: 480px;
+  background-color: $color-surface-lowest;
+  border-left: 1px solid $color-outline-variant;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+}
+
+.side-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid $color-outline-variant;
+  background-color: $color-surface;
+  flex-shrink: 0;
+}
+
+.side-panel-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.side-panel-icon {
+  font-size: 22px;
+  color: $color-primary;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.side-panel-title {
+  font-family: $font-body;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  color: $color-on-surface;
+  margin: 0 0 4px 0;
+}
+
+.side-panel-sub {
+  font-family: $font-body;
+  font-size: 12px;
+  font-weight: 400;
+  color: $color-on-surface-variant;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.close-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-on-surface-variant;
+  transition: background-color 150ms ease;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) { background-color: $color-surface-container; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .material-symbols-outlined { font-size: 20px; }
+}
+
+.side-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background-color: $color-outline-variant; border-radius: 4px; }
+}
+
+.side-panel-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid $color-outline-variant;
+  background-color: $color-surface;
+  flex-shrink: 0;
+}
+
+// ── Panel form styles ─────────────────────────────────────────────────────────
+
+.form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-family: $font-label;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: $color-on-surface;
+}
+
+.form-required {
+  color: $color-error;
+  margin-left: 2px;
+}
+
+.form-input {
+  height: 38px;
+  padding: 0 12px;
+  background-color: $color-surface-lowest;
+  border: 1px solid $color-outline-variant;
+  border-radius: 2px;
+  font-family: $font-body;
+  font-size: 14px;
+  color: $color-on-surface;
+  outline: none;
+  width: 100%;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+
+  &::placeholder { color: $color-outline; }
+
+  &:focus {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 1px $color-primary;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.form-input--prefix { padding-left: 36px; }
+}
+
+.input-prefix-wrapper {
+  position: relative;
+}
+
+.input-prefix {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: $font-body;
+  font-size: 14px;
+  font-weight: 500;
+  color: $color-on-surface-variant;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.form-field-error {
+  font-family: $font-body;
+  font-size: 12px;
+  color: $color-error;
+  margin: 2px 0 0 0;
+}
+
+.form-error-banner {
+  padding: 10px 14px;
+  background-color: $color-error-container;
+  border: 1px solid $color-error;
+  border-radius: 6px;
+  font-family: $font-body;
+  font-size: 13px;
+  color: $color-on-error-container;
+  margin-bottom: 16px;
+}
+
+// ── Native select inside the edit panel form ──────────────────────────────────
+
+.form-select-wrapper {
+  position: relative;
+
+  .form-input--select {
+    appearance: none;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  .form-select-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: $color-on-surface-variant;
+    display: flex;
+    align-items: center;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+    }
+  }
+}
+
+// ── detail-value amount variant ───────────────────────────────────────────────
+
+.detail-value--amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 16px;
+  color: $color-primary;
+}
+
+// ── Detail info section (read-only in edit panel) ─────────────────────────────
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid $color-outline-variant;
+}
+
+.detail-section-title {
+  font-family: $font-label;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $color-on-surface-variant;
+  margin: 0 0 4px 0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.detail-label {
+  font-family: $font-body;
+  font-size: 12px;
+  font-weight: 500;
+  color: $color-on-surface-variant;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  font-family: $font-body;
+  font-size: 14px;
+  color: $color-on-surface;
+  text-align: right;
+
+  &--mono {
+    font-variant-numeric: tabular-nums;
+    color: $color-primary;
+    font-weight: 500;
+  }
+}
+
+// ── Panel footer buttons ──────────────────────────────────────────────────────
+
+.btn-cancel {
+  height: 36px;
+  padding: 0 20px;
+  background: transparent;
+  border: 1px solid $color-outline-variant;
+  border-radius: 2px;
+  font-family: $font-label;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: $color-on-surface;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+
+  &:hover:not(:disabled) { background-color: $color-surface-container; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-save {
+  height: 36px;
+  padding: 0 20px;
+  background-color: $color-primary;
+  border: none;
+  border-radius: 2px;
+  font-family: $font-label;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #ffffff;
+  cursor: pointer;
+  transition: opacity 150ms ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+
+  &:hover:not(:disabled) { opacity: 0.88; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ── Cancel confirmation modal ─────────────────────────────────────────────────
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 300;
+}
+
+.confirm-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 301;
+  background-color: $color-surface-lowest;
+  border: 1px solid $color-outline-variant;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 28px 32px 24px;
+  width: 400px;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+}
+
+.confirm-dialog-icon {
+  margin-bottom: 12px;
+
+  .material-symbols-outlined {
+    font-size: 44px;
+    color: $color-error;
+  }
+}
+
+.confirm-dialog-title {
+  font-family: $font-body;
+  font-size: 20px;
+  font-weight: 600;
+  color: $color-on-surface;
+  margin: 0 0 10px 0;
+}
+
+.confirm-dialog-body {
+  font-family: $font-body;
+  font-size: 14px;
+  color: $color-on-surface-variant;
+  line-height: 20px;
+  margin: 0 0 24px 0;
+
+  strong { color: $color-on-surface; font-weight: 600; }
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btn-dialog-secondary {
+  height: 38px;
+  padding: 0 20px;
+  border: 1px solid $color-outline-variant;
+  border-radius: 2px;
+  background: transparent;
+  color: $color-on-surface;
+  font-family: $font-label;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+
+  &:hover:not(:disabled) { background-color: $color-surface-container; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-dialog-danger {
+  height: 38px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 2px;
+  background-color: $color-error;
+  color: #ffffff;
+  font-family: $font-label;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 150ms ease;
+
+  &:hover:not(:disabled) { opacity: 0.9; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ── Responsive adjustments ────────────────────────────────────────────────────
+
+@media (max-width: 767px) {
+  .history-page {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .table-card {
+    border-radius: 8px;
+  }
+
+  .filter-bar {
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  // 48px touch targets for action buttons on mobile (WCAG SC-004)
+  .action-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+// ── Forced-colors / high-contrast ─────────────────────────────────────────────
+
+@media (forced-colors: active) {
+  .chip {
+    background: Highlight;
+    color: HighlightText;
+    border: 1px solid ButtonText;
+    forced-color-adjust: none;
+  }
+
+  .chip-dot {
+    background: HighlightText;
+  }
+
+  .filter-input,
+  .filter-select {
+    border-color: ButtonText;
+  }
+}

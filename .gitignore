@@ -1,0 +1,34 @@
+# ===== Angular / Node =====
+node_modules/
+dist/
+.angular/
+.angular/cache/
+
+# ===== Test results =====
+playwright-report/
+test-results/
+coverage/
+
+# ===== Secrets & Environment =====
+.env
+.env.*
+!.env.example
+src/environments/environment.prod.ts
+src/environments/environment.local.ts
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/settings.json
+*.suo
+*.sw?
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

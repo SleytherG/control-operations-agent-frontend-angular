@@ -1,0 +1,59 @@
+<!-- SessionExpiryModalComponent — pixel-perfect per mockup screen 16 -->
+<!-- Uses project design system: --af-* CSS custom properties + semantic class names -->
+
+@if (isVisible()) {
+  <!-- Backdrop overlay — blocks all interaction behind modal (FR-021, FR-022) -->
+  <div class="session-modal-overlay">
+
+    <!-- Modal Box -->
+    <div class="session-modal" role="dialog" aria-modal="true" aria-labelledby="session-modal-title">
+
+      <!-- Modal Content -->
+      <div class="session-modal-body">
+
+        <!-- Warning Icon with pulse animation -->
+        <div class="session-modal-icon-wrapper">
+          <div class="session-modal-icon-pulse"></div>
+          <span class="material-symbols-outlined session-modal-icon">timer_off</span>
+        </div>
+
+        <!-- Heading -->
+        <h2 id="session-modal-title" class="session-modal-title">
+          Tu sesión está por finalizar
+        </h2>
+
+        <!-- Body text -->
+        <p class="session-modal-description">
+          Por razones de seguridad, tu sesión se cerrará automáticamente debido a inactividad.
+          ¿Deseas continuar operando?
+        </p>
+
+        <!-- Countdown Timer Display -->
+        <div class="session-modal-timer">
+          <span class="session-modal-timer-label">Tiempo restante</span>
+          <span class="session-modal-timer-value">{{ formattedTime }}</span>
+        </div>
+
+      </div>
+
+      <!-- Modal Actions Footer -->
+      <div class="session-modal-footer">
+        <button
+          type="button"
+          class="session-modal-btn session-modal-btn--secondary"
+          (click)="closeSession()"
+        >
+          Cerrar sesión
+        </button>
+        <button
+          type="button"
+          class="session-modal-btn session-modal-btn--primary"
+          (click)="continueSession()"
+        >
+          Continuar sesión
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

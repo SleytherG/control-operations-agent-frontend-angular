@@ -1,0 +1,291 @@
+<!-- Skip link for keyboard navigation (WCAG 2.2 AA SC-2.4.1) -->
+@if (showShell()) {
+<ng-container>
+<a class="skip-link" href="#main-content">Ir al contenido principal</a>
+
+<div class="app-shell">
+
+  <!-- Mobile backdrop — closes sidebar when tapped outside -->
+  @if (isMobileMenuOpen()) {
+    <div class="mobile-backdrop" (click)="closeMobileMenu()" aria-hidden="true"></div>
+  }
+
+  <!-- ===== SIDEBAR ===== -->
+  <nav class="sidebar" [class.sidebar--mobile-open]="isMobileMenuOpen()" aria-label="Navegación principal">
+
+    <!-- Sidebar Header — Brand -->
+    <div class="sidebar-header">
+      <div class="brand-row">
+        <div class="brand-icon" aria-hidden="true">
+          <span class="material-symbols-outlined">account_balance</span>
+        </div>
+        <h1 class="brand-name">FinOps Portal</h1>
+      </div>
+    </div>
+
+    <!-- Navigation Links — role-based (FR-025 sidebar access control) -->
+    <div class="sidebar-nav" role="list">
+
+      @if (facade.currentUser()?.role === 'ADMIN') {
+        <!-- ── ADMIN navigation ─────────────────────────────────────── -->
+        <a
+          role="listitem"
+          class="nav-item nav-item--admin"
+          routerLink="/admin/dashboard"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          aria-label="Dashboard Administrativo"
+          (click)="closeMobileMenu()"
+        >
+          <span class="material-symbols-outlined nav-icon" aria-hidden="true">admin_panel_settings</span>
+          <span class="nav-label">Dashboard Admin</span>
+        </a>
+
+        <a
+          role="listitem"
+          class="nav-item nav-item--admin"
+          routerLink="/agents"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          aria-label="Agentes"
+          (click)="closeMobileMenu()"
+        >
+          <span class="material-symbols-outlined nav-icon" aria-hidden="true">account_balance</span>
+          <span class="nav-label">Agentes</span>
+        </a>
+
+        <a
+          role="listitem"
+          class="nav-item nav-item--admin"
+          routerLink="/users"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          aria-label="Usuarios"
+          (click)="closeMobileMenu()"
+        >
+          <span class="material-symbols-outlined nav-icon" aria-hidden="true">group</span>
+          <span class="nav-label">Usuarios</span>
+        </a>
+
+        <a
+          role="listitem"
+          class="nav-item nav-item--admin"
+          routerLink="/operation-types"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          aria-label="Tipos de operación"
+          (click)="closeMobileMenu()"
+        >
+          <span class="material-symbols-outlined nav-icon" aria-hidden="true">payments</span>
+          <span class="nav-label">Tipos de operación</span>
+        </a>
+
+        <a
+          role="listitem"
+          class="nav-item nav-item--admin"
+          routerLink="/audit"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          aria-label="Auditoría"
+          (click)="closeMobileMenu()"
+        >
+          <span class="material-symbols-outlined nav-icon" aria-hidden="true">history_edu</span>
+          <span class="nav-label">Auditoría</span>
+        </a>
+
+        <a
+          role="listitem"
+          class="nav-item nav-item--admin"
+          routerLink="/admin/roles-permisos"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          aria-label="Roles y Permisos"
+          (click)="closeMobileMenu()"
+        >
+          <span class="material-symbols-outlined nav-icon" aria-hidden="true">manage_accounts</span>
+          <span class="nav-label">Roles y Permisos</span>
+        </a>
+
+        <a
+          role="listitem"
+          class="nav-item nav-item--admin"
+          routerLink="/admin/control-operaciones"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          aria-label="Control de Operaciones"
+          (click)="closeMobileMenu()"
+        >
+          <span class="material-symbols-outlined nav-icon fill" aria-hidden="true">account_tree</span>
+          <span class="nav-label">Control de Operaciones</span>
+        </a>
+
+      } @else {
+        <!-- ── OPERADOR navigation ───────────────────────────────────── -->
+        <a
+          role="listitem"
+          class="nav-item"
+          routerLink="/dashboard"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          aria-label="Dashboard"
+          (click)="closeMobileMenu()"
+        >
+          <span class="material-symbols-outlined nav-icon" aria-hidden="true">dashboard</span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+
+        <a
+          role="listitem"
+          class="nav-item"
+          routerLink="/register"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          aria-label="Registrar operación"
+          (click)="closeMobileMenu()"
+        >
+          <span class="material-symbols-outlined nav-icon" aria-hidden="true">add_card</span>
+          <span class="nav-label">Registrar operación</span>
+        </a>
+
+        <a
+          role="listitem"
+          class="nav-item"
+          routerLink="/history"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          aria-label="Mis operaciones"
+          (click)="closeMobileMenu()"
+        >
+          <span class="material-symbols-outlined nav-icon" aria-hidden="true">history</span>
+          <span class="nav-label">Mis operaciones</span>
+        </a>
+      }
+
+    </div>
+
+    <!-- User Profile Footer — shows authenticated user from AuthFacade (FR-025) -->
+    <div class="sidebar-footer">
+      <!-- Avatar with 2-letter initials matching operators list style -->
+      <div class="user-avatar-fallback" aria-hidden="true">
+        {{ getInitials(facade.currentUser()?.displayName) }}
+      </div>
+      <!-- user-info has position:relative so tooltip can be absolutely placed under the name -->
+      <div class="user-info user-info--tooltip-host">
+        <!-- Tooltip: only appears when hovering this element AND only when text is truncated -->
+        <p class="user-name"
+           #nameEl
+           (mouseenter)="checkTruncation(nameEl)"
+           (mouseleave)="showTooltip = false">
+          {{ facade.currentUser()?.displayName ?? 'Usuario' }}
+        </p>
+        <p class="user-role">{{ facade.currentUser()?.role === 'ADMIN' ? 'Administrador' : 'Operador' }}</p>
+        <!-- Tooltip — only visible when showTooltip is true (name truncated) -->
+        @if (showTooltip) {
+          <div class="user-name-tooltip" role="tooltip">
+            <span class="user-tooltip-name">{{ facade.currentUser()?.displayName }}</span>
+            <span class="user-tooltip-email">{{ facade.currentUser()?.email }}</span>
+          </div>
+        }
+      </div>
+      <!-- FR-025: Explicit logout button — always accessible from the sidebar footer -->
+      <button
+        class="icon-btn icon-btn--logout"
+        aria-label="Cerrar sesión"
+        title="Cerrar sesión"
+        (click)="facade.logout()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+      </button>
+    </div>
+
+  </nav>
+
+  <!-- ===== MAIN WRAPPER ===== -->
+  <div class="main-wrapper">
+
+    <!-- Top App Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <!-- Hamburger menu — only visible on mobile (≤767px) -->
+        <button
+          class="icon-btn hamburger-btn"
+          aria-label="Abrir menú de navegación"
+          title="Menú"
+          (click)="toggleMobileMenu()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+        </button>
+        <h2 class="topbar-title">{{ pageTitle() }}</h2>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-datetime" aria-live="polite" aria-atomic="true">
+          <p class="topbar-date">{{ currentDate() }}</p>
+          <p class="topbar-time">{{ currentTime() }}</p>
+        </div>
+        <!-- Session countdown — shows MM:SS remaining until JWT expires.
+             Turns red + rings at ≤30 seconds. -->
+        <button
+          class="token-countdown-btn"
+          [class.token-countdown-btn--alarming]="isTimerAlarming()"
+          aria-label="Tiempo restante de sesión"
+          [title]="'Sesión expira en ' + tokenCountdown()"
+          (click)="triggerSessionDialog()"
+        >
+          <span class="material-symbols-outlined token-countdown-icon" aria-hidden="true">timer</span>
+          <span class="token-countdown-text">{{ tokenCountdown() }}</span>
+        </button>
+        <button class="icon-btn icon-btn--notif" aria-label="Notificaciones" title="Notificaciones">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="notif-dot" aria-hidden="true"></span>
+        </button>
+        <!-- FR-025: Logout action also available in the topbar (US10) -->
+        <button
+          class="icon-btn"
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+          (click)="facade.logout()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Scrollable Main Content -->
+    <main
+      id="main-content"
+      class="main-content"
+      tabindex="-1"
+    >
+      <router-outlet />
+    </main>
+
+  </div>
+
+</div>
+</ng-container>
+} @else {
+  <router-outlet />
+}
+
+<!-- Global: Session Expiration Dialog (legacy — retained for simulator button) -->
+<app-session-expiration-dialog
+  [visible]="showSessionDialog()"
+  [initialSeconds]="30"
+  (continueSession)="onSessionContinue()"
+  (closeSession)="onSessionClose()"
+/>
+
+<!-- Global: Mandatory first-login password change modal (spec 015, FR-001, FR-002) -->
+<!-- Shown when authenticated user is in "primer inicio de sesión" state.            -->
+<!-- Covers the entire viewport; z-[100] ensures it is above all other content.       -->
+@if (facade.isAuthenticated() && facade.state().mustChangePassword) {
+  <app-primer-inicio-cambio-contrasena-modal />
+}
+
+<!-- Global: Session displacement modal (spec 017, FR-004, FR-016) -->
+<!-- Rendered here at root level so it persists across page navigation (FR-004).     -->
+<!-- Shown when a session_revoked SSE event is received from the backend.            -->
+<!-- z-index 9999 (in SCSS) ensures it is above all other overlays.                  -->
+@if (facade.isSessionDisplaced()) {
+  <app-session-displacement-modal />
+}

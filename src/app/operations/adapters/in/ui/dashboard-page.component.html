@@ -1,0 +1,253 @@
+<div class="dash-page">
+
+  <!-- ── Greeting (US1 — FR-003) ─────────────────────────────────────────── -->
+  <h1 class="dash-greeting">{{ greeting() }}</h1>
+
+  <!-- ── KPI Row — 5 cards (US2 — FR-004 to FR-009) ──────────────────────── -->
+  <div class="kpi-row">
+
+    @if (facade.summaryState().status === 'loading') {
+      <div class="kpi-card kpi-skeleton" aria-hidden="true"></div>
+      <div class="kpi-card kpi-skeleton" aria-hidden="true"></div>
+      <div class="kpi-card kpi-skeleton" aria-hidden="true"></div>
+      <div class="kpi-card kpi-skeleton" aria-hidden="true"></div>
+      <div class="kpi-card kpi-skeleton kpi-skeleton--dark" aria-hidden="true"></div>
+    } @else if (facade.summaryState().status === 'error') {
+      <div class="kpi-error" role="alert">
+        No se pudieron cargar los KPIs. Recarga la página para reintentar.
+      </div>
+    } @else {
+
+      <!-- Tarjeta 1 — OPS. DEL DÍA -->
+      <div class="kpi-card">
+        <div class="kpi-card__header">
+          <span class="kpi-card__label">OPS. DEL DÍA</span>
+          <span class="kpi-card__icon material-symbols-outlined" aria-hidden="true">receipt_long</span>
+        </div>
+        <div class="kpi-card__value tabular-nums">
+          {{ facade.summaryState().data?.totalOpsHoy ?? 0 | number }}
+        </div>
+        @if (hasOpsVariation()) {
+          <div class="kpi-card__trend"
+               [class.kpi-card__trend--positive]="isPositive(facade.summaryState().data?.variacionOpsVsAyer)"
+               [class.kpi-card__trend--negative]="!isPositive(facade.summaryState().data?.variacionOpsVsAyer)">
+            {{ formatVariation(facade.summaryState().data?.variacionOpsVsAyer) }}
+          </div>
+        }
+      </div>
+
+      <!-- Tarjeta 2 — MONTO BRUTO -->
+      <div class="kpi-card">
+        <div class="kpi-card__header">
+          <span class="kpi-card__label">MONTO BRUTO</span>
+          <span class="kpi-card__icon material-symbols-outlined" aria-hidden="true">payments</span>
+        </div>
+        <div class="kpi-card__value tabular-nums">
+          {{ formatAmount(facade.summaryState().data?.montoBruto) }}
+        </div>
+        @if (hasMontoVariation()) {
+          <div class="kpi-card__trend"
+               [class.kpi-card__trend--positive]="isPositive(facade.summaryState().data?.variacionMontoVsAyer)"
+               [class.kpi-card__trend--negative]="!isPositive(facade.summaryState().data?.variacionMontoVsAyer)">
+            {{ formatVariation(facade.summaryState().data?.variacionMontoVsAyer) }}
+          </div>
+        }
+      </div>
+
+      <!-- Tarjeta 3 — ENTRADAS (green accent left border) -->
+      <div class="kpi-card kpi-card--entradas">
+        <div class="kpi-card__header">
+          <span class="kpi-card__label">ENTRADAS</span>
+          <div class="kpi-card__icon-circle kpi-card__icon-circle--green" aria-hidden="true">
+            <span class="material-symbols-outlined">south_west</span>
+          </div>
+        </div>
+        <div class="kpi-card__value kpi-card__value--green tabular-nums">
+          {{ formatAmount(facade.summaryState().data?.totalEntradas) }}
+        </div>
+        <div class="kpi-card__detail tabular-nums">
+          {{ facade.summaryState().data?.countEntradas ?? 0 }} operaciones
+        </div>
+      </div>
+
+      <!-- Tarjeta 4 — SALIDAS (red accent left border) -->
+      <div class="kpi-card kpi-card--salidas">
+        <div class="kpi-card__header">
+          <span class="kpi-card__label">SALIDAS</span>
+          <div class="kpi-card__icon-circle kpi-card__icon-circle--red" aria-hidden="true">
+            <span class="material-symbols-outlined">arrow_outward</span>
+          </div>
+        </div>
+        <div class="kpi-card__value kpi-card__value--red tabular-nums">
+          {{ formatAmount(facade.summaryState().data?.totalSalidas) }}
+        </div>
+        <div class="kpi-card__detail tabular-nums">
+          {{ facade.summaryState().data?.countSalidas ?? 0 }} operaciones
+        </div>
+      </div>
+
+      <!-- Tarjeta 5 — MOVIMIENTO NETO (dark card) -->
+      <div class="kpi-card kpi-card--neto">
+        <div class="kpi-card__header">
+          <span class="kpi-card__label kpi-card__label--light">MOVIMIENTO NETO</span>
+          <span class="kpi-card__icon kpi-card__icon--light material-symbols-outlined" aria-hidden="true">
+            calculate
+          </span>
+        </div>
+        <div class="kpi-card__value kpi-card__value--white tabular-nums">
+          {{ formatAmount(facade.summaryState().data?.movimientoNeto) }}
+        </div>
+        <div class="kpi-card__badge"
+             [class.kpi-card__badge--positive]="facade.summaryState().data?.liquidez === 'POSITIVO'"
+             [class.kpi-card__badge--negative]="facade.summaryState().data?.liquidez === 'NEGATIVO'">
+          {{ formatLiquidez(facade.summaryState().data?.liquidez) }}
+        </div>
+      </div>
+
+    }
+  </div>
+
+  <!-- ── Charts Row (US3 bar + US4 doughnut) ───────────────────────────────── -->
+  <div class="charts-row">
+
+    <!-- Panel: Volumen Operativo por Hora (US3 — FR-010) -->
+    <div class="chart-panel chart-panel--bar">
+      <div class="chart-panel__header">
+        <div class="chart-panel__title-group">
+          <h2 class="chart-panel__title">Volumen Operativo por Hora</h2>
+          <div class="chart-panel__legend">
+            <span class="legend-dot legend-dot--green" aria-hidden="true"></span>
+            <span class="legend-label">Entradas</span>
+            <span class="legend-dot legend-dot--red" aria-hidden="true"></span>
+            <span class="legend-label">Salidas</span>
+          </div>
+        </div>
+        <button class="chart-panel__menu-btn" type="button" aria-label="Opciones del gráfico" disabled>
+          <span>···</span>
+        </button>
+      </div>
+      <!-- Canvas always in DOM — overlay handles loading/error (D1/T047 lesson) -->
+      <div class="chart-canvas-wrap">
+        <canvas #hourlyChart role="img" aria-label="Gráfico de volumen operativo por hora"></canvas>
+        @if (facade.hourlyState().status === 'loading') {
+          <div class="chart-overlay chart-overlay--skeleton" role="status" aria-label="Cargando gráfico"></div>
+        } @else if (facade.hourlyState().status === 'error') {
+          <div class="chart-overlay chart-overlay--error" role="alert">
+            Error al cargar. Recarga la página.
+          </div>
+        } @else if (facade.hourlyState().data?.points?.length === 0) {
+          <div class="chart-overlay chart-overlay--empty" role="status">
+            Sin operaciones registradas hoy
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Panel: Distribución por Tipo (US4 — FR-011) -->
+    <div class="chart-panel chart-panel--doughnut">
+      <h2 class="chart-panel__title">Distribución por Tipo</h2>
+
+      <!-- Doughnut wrap with HTML overlay for centre text (D-07) -->
+      <div class="doughnut-wrap">
+        <canvas #doughnutChart role="img" aria-label="Gráfico de distribución por tipo de operación"></canvas>
+
+        <!-- Centre text overlay — total ops -->
+        @if (facade.distributionState().status === 'content' && facade.distributionState().data) {
+          <div class="doughnut-centre" aria-hidden="true">
+            <span class="doughnut-centre__label">TOTAL</span>
+            <span class="doughnut-centre__value tabular-nums">
+              {{ facade.distributionState().data!.totalOps | number }}
+            </span>
+          </div>
+        }
+
+        @if (facade.distributionState().status === 'loading') {
+          <div class="chart-overlay chart-overlay--skeleton" role="status"></div>
+        } @else if (facade.distributionState().status === 'error') {
+          <div class="chart-overlay chart-overlay--error" role="alert">
+            Error al cargar. Recarga la página.
+          </div>
+        }
+      </div>
+
+      <!-- Legend — type name + % + count (C5: show only available segments) -->
+      @if (facade.distributionState().status === 'content' && facade.distributionState().data) {
+        <ul class="doughnut-legend" aria-label="Leyenda de distribución por tipo">
+          @for (seg of facade.distributionState().data!.segments; track seg.internalCode) {
+            <li class="doughnut-legend__row">
+              <div class="doughnut-legend__left">
+                <span class="doughnut-legend__dot"
+                      [style.background-color]="getColorForCode(seg.internalCode)"
+                      aria-hidden="true"></span>
+                <span class="doughnut-legend__name">{{ seg.typeName }}</span>
+              </div>
+              <span class="doughnut-legend__pct tabular-nums">
+                {{ seg.percentage | number:'1.0-1' }}%&nbsp;({{ seg.count | number }})
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+  </div>
+
+  <!-- ── Recent Operations Table (US5 — FR-013, C5 remediation) ────────────── -->
+  <div class="recent-card">
+    <div class="recent-card__header">
+      <h2 class="recent-card__title">Últimas 5 Operaciones</h2>
+      <a routerLink="/history" class="recent-card__link">VER TODAS</a>
+    </div>
+
+    @if (facade.recentState().status === 'loading') {
+      <div class="table-skeleton" role="status" aria-label="Cargando operaciones"></div>
+    } @else if (facade.recentState().status === 'error') {
+      <div class="table-error" role="alert">
+        Error al cargar las operaciones recientes. Recarga la página.
+      </div>
+    } @else {
+      <table class="recent-table" aria-label="Últimas 5 operaciones del día">
+        <thead>
+          <tr>
+            <th scope="col">FECHA</th>
+            <th scope="col">HORA</th>
+            <th scope="col">AGENTE</th>
+            <th scope="col">TIPO</th>
+            <th scope="col" class="text-right">MONTO</th>
+            <th scope="col" class="text-center">ESTADO</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if ((facade.recentState().data?.operations ?? []).length === 0) {
+            <tr>
+              <td colspan="6" class="recent-table__empty">Sin operaciones registradas hoy</td>
+            </tr>
+          } @else {
+            <!-- C5 remediation: only renders available rows (no ghost empty rows) -->
+            @for (op of facade.recentState().data!.operations; track op.id) {
+              <tr>
+                <td class="tabular-nums">{{ op.fecha }}</td>
+                <td class="tabular-nums">{{ op.hora }}</td>
+                <td>{{ op.agente }}</td>
+                <td>
+                  <span class="op-type" [ngClass]="getTypeClass(op.internalCode)">
+                    &nbsp;{{ op.tipo }}
+                  </span>
+                </td>
+                <td class="text-right tabular-nums">{{ formatAmount(op.monto) }}</td>
+                <td class="text-center">
+                  <span class="status-dot"
+                        [class.status-dot--active]="op.estado === 'ACTIVE'"
+                        [class.status-dot--cancelled]="op.estado === 'CANCELLED'"
+                        [attr.aria-label]="op.estado === 'ACTIVE' ? 'Activo' : 'Anulado'">
+                  </span>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>

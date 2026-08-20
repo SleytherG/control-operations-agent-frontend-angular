@@ -1,0 +1,11 @@
+{
+  "name": "Control de Operaciones — Agente",
+  "short_name": "Operaciones",
+  "description": "Registro y consulta de operaciones para el agente",
+  "theme_color": "#1565c0",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": []
+}

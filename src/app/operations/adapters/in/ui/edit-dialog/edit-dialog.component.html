@@ -1,0 +1,92 @@
+<h2 mat-dialog-title id="edit-dialog-title">Editar operaciรณn</h2>
+
+<mat-dialog-content>
+  @if (errorMessage) {
+    <p class="dialog-error" role="alert" aria-live="assertive" data-testid="edit-dialog-error">
+      {{ errorMessage }}
+    </p>
+  }
+
+  <form [formGroup]="form" aria-label="Formulario de ediciรณn de operaciรณn" novalidate>
+    <mat-form-field appearance="outline" class="field-full-width">
+      <mat-label>Tipo de operaciรณn</mat-label>
+      <mat-select formControlName="type" data-testid="edit-field-type" required>
+        @for (opType of operationTypes; track opType) {
+          <mat-option [value]="opType" data-testid="edit-type-option">
+            {{ operationTypeLabels[opType] }}
+          </mat-option>
+        }
+      </mat-select>
+      @if (form.get('type')?.invalid && form.get('type')?.touched) {
+        <mat-error data-testid="edit-error-type" role="alert">
+          Seleccione un tipo de operaciรณn
+        </mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="field-full-width">
+      <mat-label>Monto</mat-label>
+      <input
+        matInput
+        formControlName="amount"
+        data-testid="edit-field-amount"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        required
+      />
+      @if (form.get('amount')?.invalid && form.get('amount')?.touched) {
+        <mat-error data-testid="edit-error-amount" role="alert">
+          Ingrese un monto vรกlido mayor que cero
+        </mat-error>
+      }
+    </mat-form-field>
+  </form>
+
+  <!-- T027: Anular operaciรณn button โ�� placed below the edit form, distinct from Guardar/Cancelar -->
+  <div class="anular-section">
+    <button
+      mat-stroked-button
+      color="warn"
+      data-testid="btn-cancel-operation"
+      [disabled]="isSaving || isCanceling()"
+      (click)="onCancelOperation()"
+      aria-label="Anular operación (acción irreversible)"
+      class="anular-btn"
+    >
+      @if (isCanceling()) {
+        <mat-spinner diameter="18" aria-hidden="true"></mat-spinner>
+      } @else {
+        <mat-icon aria-hidden="true">block</mat-icon>
+      }
+      <span [class.sr-only]="isCanceling()">{{ isCanceling() ? 'Anulando...' : 'Anular operación' }}</span>
+    </button>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-stroked-button
+    data-testid="edit-btn-cancel"
+    [disabled]="isSaving || isCanceling()"
+    (click)="onCancel()"
+    aria-label="Cancelar ediciรณn"
+  >
+    Cancelar
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    data-testid="edit-btn-save"
+    [disabled]="form.invalid || isSaving || isCanceling()"
+    (click)="onSave()"
+    aria-label="Guardar cambios de la operaciรณn"
+  >
+    @if (isSaving) {
+      <mat-spinner diameter="20" aria-hidden="true"></mat-spinner>
+      <span class="sr-only">Guardando...</span>
+    } @else {
+      Guardar
+    }
+  </button>
+</mat-dialog-actions>

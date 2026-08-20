@@ -1,0 +1,84 @@
+.field-full-width {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.dialog-error {
+  color: #c62828;
+  background: #ffebee;
+  border-left: 4px solid #c62828;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+mat-dialog-actions button .mat-icon,
+mat-dialog-actions button mat-spinner {
+  vertical-align: middle;
+}
+
+// T027: Anular section — visually separated from the edit form
+.anular-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.anular-btn {
+  width: 100%;
+
+  mat-spinner {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.25rem;
+  }
+
+  mat-icon {
+    vertical-align: middle;
+    margin-right: 0.25rem;
+  }
+}
+
+// ===== Responsive (T023 — FR-012, Decision 10) =====
+
+@media (max-width: 767px) {
+  .field-full-width {
+    width: 100%;
+  }
+
+  // Dialog content scrollable internally (max-height: 90vh — Decision 10)
+  // The CDK overlay pane width is handled globally in styles.scss (T022)
+  ::ng-deep mat-dialog-content {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  // Action buttons stacked and full-width with 48px min touch target
+  ::ng-deep mat-dialog-actions {
+    flex-direction: column;
+    gap: 8px;
+
+    button {
+      width: 100%;
+      min-height: 48px;
+    }
+  }
+
+  .anular-section {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+  }
+}

@@ -1,0 +1,545 @@
+// ===== Operator Dashboard — AgenteFlow Design System (spec 013) =====
+// All pixel values match the approved maqueta exactly.
+
+// ─── Page wrapper ─────────────────────────────────────────────────────────────
+.dash-page {
+  padding: var(--af-space-lg, 24px);
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--af-space-lg, 24px);
+  background-color: var(--af-background, #f7f5f7);
+  min-height: 100%;
+}
+
+// ─── Greeting (US1) ───────────────────────────────────────────────────────────
+.dash-greeting {
+  font-family: var(--af-font-headline, 'Inter', sans-serif);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 36px;
+  letter-spacing: -0.02em;
+  color: var(--af-on-surface, #1b1b1d);
+  margin: 0;
+}
+
+// ─── KPI Row — 5 cards (US2) ──────────────────────────────────────────────────
+.kpi-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+
+  @media (min-width: 768px)  { grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 1024px) { grid-template-columns: repeat(5, 1fr); }
+}
+
+.kpi-card {
+  position: relative;
+  background-color: var(--af-surface, #fff);
+  border: 1px solid var(--af-outline-variant, #c6c6cd);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 110px;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  &__label {
+    font-family: var(--af-font-body, 'Inter', sans-serif);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--af-on-surface-variant, #45464d);
+
+    &--light { color: rgba(255, 255, 255, 0.7); }
+  }
+
+  &__icon {
+    font-size: 20px;
+    color: var(--af-on-surface-variant, #45464d);
+
+    &--light { color: rgba(255, 255, 255, 0.5); }
+  }
+
+  &__icon-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    .material-symbols-outlined { font-size: 18px; }
+
+    &--green { background-color: rgba(78, 222, 163, 0.15); color: #4edea3; }
+    &--red   { background-color: rgba(230, 57, 70, 0.12);  color: #e63946; }
+  }
+
+  &__value {
+    font-family: var(--af-font-headline, 'Inter', sans-serif);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--af-on-surface, #1b1b1d);
+
+    &--green { color: #4edea3; }
+    &--red   { color: #e63946; }
+    &--white { color: #ffffff; }
+  }
+
+  &__trend {
+    font-size: 12px;
+    font-weight: 500;
+
+    &--positive { color: #4edea3; }
+    &--negative { color: #e63946; }
+
+    &::before { content: '↑ '; }
+  }
+
+  &__detail {
+    font-size: 12px;
+    color: var(--af-on-surface-variant, #45464d);
+  }
+
+  &__badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    width: fit-content;
+
+    &--positive { background-color: #4edea3; color: #0b2a1f; }
+    &--negative { background-color: #e63946; color: #ffffff; }
+  }
+
+  // Tarjeta 3 — ENTRADAS: 4px green left accent border
+  &--entradas { border-left: 4px solid #4edea3; }
+
+  // Tarjeta 4 — SALIDAS: 4px red left accent border
+  &--salidas  { border-left: 4px solid #e63946; }
+
+  // Tarjeta 5 — MOVIMIENTO NETO: dark card
+  &--neto {
+    background-color: #0b1c30;
+    border-color: #0b1c30;
+    color: #ffffff;
+  }
+}
+
+// KPI skeleton
+.kpi-skeleton {
+  min-height: 110px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #eae7e9 25%, #f0edef 50%, #eae7e9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border: none;
+
+  &--dark {
+    background: linear-gradient(90deg, #0b1c30 25%, #152840 50%, #0b1c30 75%);
+    background-size: 200% 100%;
+  }
+}
+
+.kpi-error {
+  grid-column: 1 / -1;
+  padding: 16px;
+  background-color: #ffdad6;
+  color: #ba1a1a;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+// ─── Charts Row — bar (62%) + doughnut (35%) ──────────────────────────────────
+.charts-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.chart-panel {
+  background-color: var(--af-surface, #fff);
+  border: 1px solid var(--af-outline-variant, #c6c6cd);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &--bar {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &--doughnut {
+    width: 100%;
+    @media (min-width: 1024px) { width: 360px; flex-shrink: 0; }
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  &__title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__title {
+    font-family: var(--af-font-headline, 'Inter', sans-serif);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--af-on-surface, #1b1b1d);
+    margin: 0;
+  }
+
+  &__legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--af-on-surface-variant, #45464d);
+    font-size: 18px;
+    padding: 4px;
+    border-radius: 4px;
+    line-height: 1;
+
+    &:hover { background-color: var(--af-surface-container-high, #eae7e9); }
+    &:disabled { opacity: 0.4; cursor: default; }
+  }
+}
+
+// Legend dots (bar chart top)
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &--green { background-color: #4edea3; }
+  &--red   { background-color: #e63946; }
+}
+
+.legend-label {
+  font-size: 12px;
+  color: var(--af-on-surface-variant, #45464d);
+}
+
+// Chart canvas container — canvas always in DOM
+.chart-canvas-wrap {
+  position: relative;
+  height: 260px;
+  min-height: 200px;
+
+  canvas {
+    display: block;
+    width:  100% !important;
+    height: 100% !important;
+  }
+}
+
+// Chart overlays (loading, error, empty)
+.chart-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  text-align: center;
+  padding: 12px;
+
+  &--skeleton {
+    background: linear-gradient(90deg, #eae7e9 25%, #f0edef 50%, #eae7e9 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  &--error {
+    background-color: rgba(255, 218, 214, 0.95);
+    color: #ba1a1a;
+  }
+
+  &--empty {
+    background-color: rgba(255, 255, 255, 0.85);
+    color: var(--af-on-surface-variant, #45464d);
+  }
+}
+
+// ─── Doughnut chart (US4) ─────────────────────────────────────────────────────
+.doughnut-wrap {
+  position: relative;
+  // Square container — prevents the canvas from being wider than tall,
+  // which would cause the chart to render close to the edge and get clipped.
+  // layout.padding:12 in Chart.js also provides internal breathing room.
+  width: 220px;
+  height: 220px;
+  margin: 0 auto;
+  overflow: visible; // allow hoverOffset expansion to breathe without clipping
+
+  canvas {
+    display: block;
+    width:  100% !important;
+    height: 100% !important;
+  }
+}
+
+.doughnut-centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  // z-index:1 keeps the centre text above the canvas background but
+  // the tooltip (drawn on the canvas with position:'nearest') renders
+  // at the segment edge so it no longer overlaps this overlay.
+  z-index: 1;
+
+  &__label {
+    font-family: var(--af-font-body, 'Inter', sans-serif);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--af-on-surface-variant, #45464d);
+  }
+
+  &__value {
+    font-family: var(--af-font-headline, 'Inter', sans-serif);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--af-on-surface, #1b1b1d);
+  }
+}
+
+.doughnut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  // Fixed height with scroll — prevents the panel from growing when many
+  // operation types are present. Shows ~4 rows before scrolling.
+  max-height: 120px;
+  overflow-y: auto;
+
+  // Slim custom scrollbar
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--af-outline-variant, #c6c6cd);
+    border-radius: 4px;
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+  }
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &__dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &__name {
+    font-size: 13px;
+    color: var(--af-on-surface, #1b1b1d);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__pct {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--af-on-surface-variant, #45464d);
+    white-space: nowrap;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+}
+
+// ─── Recent Operations Table (US5) ────────────────────────────────────────────
+.recent-card {
+  background-color: var(--af-surface, #fff);
+  border: 1px solid var(--af-outline-variant, #c6c6cd);
+  border-radius: 12px;
+  padding: 16px;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--af-outline-variant, #c6c6cd);
+  }
+
+  &__title {
+    font-family: var(--af-font-headline, 'Inter', sans-serif);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--af-on-surface, #1b1b1d);
+    margin: 0;
+  }
+
+  &__link {
+    font-family: var(--af-font-body, 'Inter', sans-serif);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--af-primary, #1b527d);
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
+}
+
+.recent-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  // Horizontal scroll on narrow screens (C5)
+  @media (max-width: 767px) {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  thead tr {
+    border-bottom: 1px solid var(--af-outline-variant, #c6c6cd);
+  }
+
+  th {
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--af-on-surface-variant, #45464d);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--af-outline-variant, #c6c6cd);
+    color: var(--af-on-surface, #1b1b1d);
+    white-space: nowrap;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td {
+    background-color: var(--af-surface-container-low, #f7f5f7);
+  }
+
+  &__empty {
+    padding: 24px 12px;
+    text-align: center;
+    color: var(--af-on-surface-variant, #45464d);
+    font-size: 13px;
+  }
+}
+
+// ─── Table skeleton and error ──────────────────────────────────────────────────
+.table-skeleton {
+  height: 200px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eae7e9 25%, #f0edef 50%, #eae7e9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.table-error {
+  padding: 16px;
+  background-color: #ffdad6;
+  color: #ba1a1a;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+}
+
+// ─── Operation type column (US5) ─────────────────────────────────────────────
+// All type names display in the standard body text colour — no green/red tinting.
+.op-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  color: var(--af-on-surface, #1b1b1d);
+
+  // Modifier classes kept for potential future use but no colour override.
+  &.type-deposit    { color: var(--af-on-surface, #1b1b1d); }
+  &.type-withdrawal { color: var(--af-on-surface, #1b1b1d); }
+  &.type-other      { color: var(--af-on-surface, #1b1b1d); }
+}
+
+// ─── Status dot (US5) ─────────────────────────────────────────────────────────
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--af-outline, #76777d);
+
+  &--active    { background-color: #4edea3; }
+  &--cancelled { background-color: #e63946; }
+}
+
+// ─── Text utilities ────────────────────────────────────────────────────────────
+.text-right  { text-align: right; }
+.text-center { text-align: center; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+// ─── Shimmer animation ────────────────────────────────────────────────────────
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

@@ -1,0 +1,701 @@
+<div class="operators-page">
+  <div class="operators-page-inner">
+
+    <!-- ── Page Header ──────────────────────────────────────────────────────── -->
+    <div class="page-header">
+      <div class="page-header-text">
+        <h1 class="page-title">Usuarios del Sistema</h1>
+        <p class="page-subtitle">Gestión de usuarios y control de acceso al sistema.</p>
+      </div>
+      <button class="btn-primary" type="button" (click)="openAddPanel()">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+        Agregar Nuevo Usuario
+      </button>
+    </div>
+
+    <!-- ── Success notification (shown after user creation, spec 015) ───────── -->
+    @if (addSuccessMessage) {
+      <div
+        class="success-banner"
+        role="status"
+        aria-live="polite"
+      >
+        <span class="material-symbols-outlined success-banner-icon" aria-hidden="true">mark_email_read</span>
+        <span class="success-banner-text">{{ addSuccessMessage }}</span>
+        <button
+          class="success-banner-close"
+          type="button"
+          aria-label="Cerrar notificación"
+          (click)="addSuccessMessage = ''"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </div>
+    }
+
+    <!-- ── Filters Bar ───────────────────────────────────────────────────────── -->
+    <div class="filters-bar">
+
+      <!-- Search with Autocomplete (US2, FR-004) -->
+      <div class="filter-search">
+        <label class="filter-label" for="op-search">Buscar Usuario / ID</label>
+        <div class="search-input-wrapper" style="position:relative;">
+          <span class="material-symbols-outlined search-icon" aria-hidden="true">search</span>
+          <input
+            class="search-input"
+            id="op-search"
+            type="text"
+            placeholder="Nombre o Documento..."
+            [value]="searchInputValue"
+            (input)="onSearchInput($any($event.target).value)"
+            (blur)="onSearchBlur()"
+            autocomplete="off"
+          />
+          <!-- Autocomplete dropdown (US2, FR-004) -->
+          @if (showAutocompleteDropdown) {
+            <div class="autocomplete-dropdown">
+              @if (facade.autocomplete().loading) {
+                <div class="autocomplete-loading">
+                  <span class="material-symbols-outlined autocomplete-spin">progress_activity</span>
+                  Buscando…
+                </div>
+              } @else if (facade.autocomplete().results.length === 0) {
+                <div class="autocomplete-empty">No se encontraron resultados</div>
+              } @else {
+                @for (item of facade.autocomplete().results; track item.id) {
+                  <button
+                    class="autocomplete-item"
+                    type="button"
+                    (mousedown)="onAutocompleteSelect(item)"
+                  >
+                    <span class="autocomplete-name">{{ item.fullName }}</span>
+                    <span class="autocomplete-dni">{{ item.dni }}</span>
+                  </button>
+                }
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Agent Filter (US3, FR-006 — populated from backend) -->
+      <div class="filter-select-group">
+        <label class="filter-label" for="op-agent">Agente Asignado</label>
+        <select
+          class="filter-select"
+          id="op-agent"
+          [ngModel]="pendingAgentId"
+          (ngModelChange)="onAgentFilterChange($event)"
+        >
+          <option value="">Todos los Agentes</option>
+          @for (agent of agents(); track agent.id) {
+            <option [value]="agent.id">{{ agent.businessName }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Status Filter (US4 — ACTIVO/INACTIVO only, no SUSPENDIDO) -->
+      <div class="filter-select-group filter-select-group--sm">
+        <label class="filter-label" for="op-status">Estado</label>
+        <select
+          class="filter-select"
+          id="op-status"
+          [ngModel]="pendingStatus"
+          (ngModelChange)="onStatusFilterChange($event)"
+        >
+          <option value="">Todos</option>
+          <option value="ACTIVO">Activo</option>
+          <option value="INACTIVO">Inactivo</option>
+        </select>
+      </div>
+
+      <!-- Filter action buttons: LIMPIAR / FILTRAR — same structure as /audit and /operation-types -->
+      <div class="filter-action-btns">
+        <button class="btn-limpiar" type="button" (click)="clearAllFilters()">LIMPIAR</button>
+        <button class="btn-filtrar" type="button" (click)="applyAllFilters()">FILTRAR</button>
+      </div>
+    </div>
+
+    <!-- ── Data Table ─────────────────────────────────────────────────────────── -->
+    <div class="table-card">
+      <div class="table-scroll">
+        <table class="data-table" aria-label="Lista de usuarios">
+          <thead>
+            <tr class="table-header-row">
+              <th class="th th--check" scope="col">
+                <input class="table-checkbox" type="checkbox" aria-label="Seleccionar todos" />
+              </th>
+              <th class="th" scope="col">Nombre del Usuario</th>
+              <th class="th" scope="col">ID / DNI</th>
+              <th class="th" scope="col">Rol</th>
+              <th class="th" scope="col">Agente Asignado</th>
+              <th class="th" scope="col">Estado</th>
+              <th class="th" scope="col">Última Conexión</th>
+              <th class="th th--right" scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- Loading state (US1, FR-022) -->
+            @if (facade.state().status === 'loading') {
+              <tr>
+                <td class="td td--empty" colspan="8">
+                  <span class="material-symbols-outlined empty-icon" aria-hidden="true">progress_activity</span>
+                  <p>Cargando usuarios…</p>
+                </td>
+              </tr>
+            }
+
+            <!-- Error state with retry (US1, FR-022) -->
+            @else if (facade.state().status === 'error') {
+              <tr>
+                <td class="td td--empty" colspan="8">
+                  <span class="material-symbols-outlined empty-icon" aria-hidden="true">error_outline</span>
+                  <p>{{ facade.state().error ?? 'Error al cargar usuarios.' }}</p>
+                  <button class="btn-retry" type="button" (click)="facade.reload()">
+                    <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+                    Reintentar
+                  </button>
+                </td>
+              </tr>
+            }
+
+            <!-- Empty state -->
+            @else if (facade.state().operators.length === 0) {
+              <tr>
+                <td class="td td--empty" colspan="8">
+                  <span class="material-symbols-outlined empty-icon" aria-hidden="true">search_off</span>
+                  <p>No se encontraron usuarios con los filtros aplicados.</p>
+                </td>
+              </tr>
+            }
+
+            <!-- User rows (US1 — real data from backend) -->
+            @else {
+              @for (op of facade.state().operators; track op.id) {
+                <tr class="table-row">
+                  <td class="td td--check">
+                    <input class="table-checkbox" type="checkbox" [attr.aria-label]="'Seleccionar ' + op.fullName" />
+                  </td>
+
+                  <!-- Name + email -->
+                  <td class="td">
+                    <div class="operator-identity">
+                      <div class="operator-avatar" aria-hidden="true">{{ op.initials }}</div>
+                      <div class="operator-meta">
+                        <p class="operator-name">{{ op.fullName }}</p>
+                        <p class="operator-email">{{ op.email }}</p>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- DNI -->
+                  <td class="td"><span class="data-mono">{{ op.dni }}</span></td>
+
+                  <!-- Rol -->
+                  <td class="td">
+                    <span
+                      class="role-badge"
+                      [class.role-badge--admin]="op.role === 'ADMIN'"
+                      [class.role-badge--operator]="op.role === 'OPERADOR'"
+                    >{{ roleLabel(op.role) }}</span>
+                  </td>
+
+                  <!-- Assigned agent -->
+                  <td class="td">
+                    @if (op.agentName) {
+                      <p class="agent-name">{{ op.agentName }}</p>
+                      <p class="agent-code">{{ op.agentCode }}</p>
+                    } @else {
+                      <span class="agent-none">—</span>
+                    }
+                  </td>
+
+                  <!-- Status badge (ACTIVO green / INACTIVO grey — FR-002) -->
+                  <td class="td">
+                    <span
+                      class="status-badge"
+                      [class.status-badge--active]="op.status === 'ACTIVO'"
+                      [class.status-badge--inactive]="op.status === 'INACTIVO'"
+                    >
+                      <span class="status-dot" aria-hidden="true"></span>
+                      {{ statusLabel(op.status) }}
+                    </span>
+                  </td>
+
+                  <!-- Last connection (human-readable date + detail) -->
+                  <td class="td">
+                    <p class="connection-time">{{ formatConnectionDate(op.lastConnectionAt) }}</p>
+                    @if (op.lastConnectionDetail) {
+                      <p class="connection-sub">{{ op.lastConnectionDetail }}</p>
+                    }
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="td td--right">
+                    <div class="row-actions">
+                      <!-- Edit -->
+                      <button
+                        class="action-btn"
+                        type="button"
+                        title="Editar"
+                        (click)="openEditPanel(op)"
+                        [attr.aria-label]="'Editar ' + op.fullName"
+                      >
+                        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                      </button>
+
+                      <!-- Block (ACTIVO → INACTIVO, FR-015) -->
+                      @if (op.status === 'ACTIVO') {
+                        <button
+                          class="action-btn action-btn--danger"
+                          type="button"
+                          title="Desactivar"
+                          [disabled]="isStatusChanging(op)"
+                          (click)="blockOperator(op)"
+                          [attr.aria-label]="'Desactivar ' + op.fullName"
+                        >
+                          <span class="material-symbols-outlined" aria-hidden="true">block</span>
+                        </button>
+                      }
+
+                      <!-- Unblock (INACTIVO → ACTIVO, FR-015) -->
+                      @if (op.status === 'INACTIVO') {
+                        <button
+                          class="action-btn action-btn--success"
+                          type="button"
+                          title="Activar"
+                          [disabled]="isStatusChanging(op)"
+                          (click)="unblockOperator(op)"
+                          [attr.aria-label]="'Activar ' + op.fullName"
+                        >
+                          <span class="material-symbols-outlined" aria-hidden="true">lock_open</span>
+                        </button>
+                      }
+
+                      <!-- Ver detalles (US9, FR-024) -->
+                      <button
+                        class="action-btn"
+                        type="button"
+                        title="Ver detalles"
+                        (click)="openDetailPanel(op)"
+                        [attr.aria-label]="'Ver detalles de ' + op.fullName"
+                      >
+                        <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer (US5, FR-008) -->
+      <div class="table-pagination">
+        <p class="pagination-info">
+          Mostrando
+          <strong>{{ facade.state().operators.length }}</strong>
+          de
+          <strong>{{ facade.state().totalElements }}</strong>
+          usuarios
+        </p>
+        <div class="pagination-controls">
+          <button
+            class="page-btn"
+            type="button"
+            [disabled]="facade.state().currentPage <= 1"
+            aria-label="Página anterior"
+            (click)="goToPage(facade.state().currentPage - 1)"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+          </button>
+
+          @for (n of pageNumbers(); track n) {
+            <button
+              class="page-btn"
+              [class.page-btn--active]="n === facade.state().currentPage"
+              type="button"
+              [attr.aria-current]="n === facade.state().currentPage ? 'page' : null"
+              (click)="goToPage(n)"
+            >{{ n }}</button>
+          }
+
+          <button
+            class="page-btn"
+            type="button"
+            [disabled]="facade.state().currentPage >= totalPages()"
+            aria-label="Página siguiente"
+            (click)="goToPage(facade.state().currentPage + 1)"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Add User Side Panel ──────────────────────────────────────────────────── -->
+@if (facade.state().activePanel === 'add') {
+  <div
+    class="overlay-backdrop"
+    @fadeBackdrop
+    (click)="closeAddPanel()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+  <aside class="side-panel" @slideInPanel role="dialog" aria-modal="true" aria-label="Nuevo usuario">
+    <div class="side-panel-header">
+      <div>
+        <h2 class="side-panel-title">Nuevo Usuario</h2>
+        <p class="side-panel-sub">Registrar un nuevo usuario en el sistema.</p>
+      </div>
+      <button class="close-btn" type="button" (click)="closeAddPanel()" aria-label="Cerrar panel">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <div class="side-panel-body">
+      @if (addError) {
+        <div class="form-error-banner">{{ addError }}</div>
+      }
+      <div class="form-section">
+        <h3 class="form-section-title">Información Personal</h3>
+        <div class="form-field">
+          <label class="form-label" for="add-fullName">Nombre Completo *</label>
+          <input class="form-input" id="add-fullName" type="text" placeholder="Ej. Juan Pérez" [(ngModel)]="addForm.fullName" />
+          @if (!addForm.fullName.trim() && isSaving) {
+            <span class="form-validation">Nombre completo es requerido</span>
+          }
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="add-dni">DNI *</label>
+          <input class="form-input" id="add-dni" type="text" placeholder="Ej. 74839201" [(ngModel)]="addForm.dni" />
+          @if (!addForm.dni.trim() && isSaving) {
+            <span class="form-validation">DNI es requerido</span>
+          }
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="add-email">Correo Electrónico *</label>
+          <input class="form-input" id="add-email" type="email" placeholder="ejemplo@agenteflow.pe" [(ngModel)]="addForm.email" />
+          @if (!addForm.email.trim() && isSaving) {
+            <span class="form-validation">Correo electrónico es requerido</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section-title">Asignación</h3>
+        <div class="form-field">
+          <label class="form-label" for="add-role">Rol</label>
+          <select class="form-select" id="add-role" [(ngModel)]="addForm.role" (ngModelChange)="onAddRoleChange($event)">
+            <option value="OPERADOR">Operador</option>
+            <option value="ADMIN">Administrador</option>
+          </select>
+        </div>
+        @if (addForm.role !== 'ADMIN') {
+          <div class="form-field">
+            <label class="form-label" for="add-agent">Agente Asignado</label>
+            <select class="form-select" id="add-agent" [(ngModel)]="addForm.agentId">
+              <option value="">Sin asignar</option>
+              @for (agent of agents(); track agent.id) {
+                <option [value]="agent.id">{{ agent.businessName }}</option>
+              }
+            </select>
+          </div>
+        } @else {
+          <div class="form-info-badge">
+            <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+            Los administradores gestionan el sistema completo y no requieren agente asignado.
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="side-panel-footer">
+      <button class="btn-cancel" type="button" (click)="closeAddPanel()">Cancelar</button>
+      <button class="btn-save" type="button" [disabled]="isSaving" (click)="saveNewOperator()">
+        @if (isSaving) { Registrando… } @else { Registrar Usuario }
+      </button>
+    </div>
+  </aside>
+}
+
+<!-- ── Edit User Side Panel ─────────────────────────────────────────────────── -->
+@if (facade.state().activePanel === 'edit') {
+  <div
+    class="overlay-backdrop"
+    @fadeBackdrop
+    (click)="closeEditPanel()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+  <aside class="side-panel" @slideInPanel role="dialog" aria-modal="true" aria-label="Editar usuario">
+    <div class="side-panel-header">
+      <div>
+        <h2 class="side-panel-title">Editar Usuario</h2>
+        <p class="side-panel-sub">Modificar los datos del usuario en el sistema.</p>
+      </div>
+      <button class="close-btn" type="button" (click)="closeEditPanel()" aria-label="Cerrar panel">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <div class="side-panel-body">
+      @if (editError) {
+        <div class="form-error-banner">{{ editError }}</div>
+      }
+      <div class="form-section">
+        <h3 class="form-section-title">Información Personal</h3>
+        <div class="form-field">
+          <label class="form-label" for="edit-fullName">Nombre Completo</label>
+          <input class="form-input" id="edit-fullName" type="text" [(ngModel)]="editForm.fullName" />
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="edit-email">Correo Electrónico</label>
+          <input class="form-input" id="edit-email" type="email" [(ngModel)]="editForm.email" />
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section-title">Asignación</h3>
+        <div class="form-field">
+          <label class="form-label" for="edit-role">Rol</label>
+          <select class="form-select" id="edit-role" [(ngModel)]="editForm.role" (ngModelChange)="onEditRoleChange($event)">
+            <option value="OPERADOR">Operador</option>
+            <option value="ADMIN">Administrador</option>
+          </select>
+        </div>
+        @if (editForm.role !== 'ADMIN') {
+          <div class="form-field">
+            <label class="form-label" for="edit-agent">Agente Asignado</label>
+            <select class="form-select" id="edit-agent" [(ngModel)]="editForm.agentId">
+              <option value="">Sin asignar</option>
+              @for (agent of agents(); track agent.id) {
+                <option [value]="agent.id">{{ agent.businessName }}</option>
+              }
+            </select>
+          </div>
+        } @else {
+          <div class="form-info-badge">
+            <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+            Los administradores gestionan el sistema completo y no requieren agente asignado.
+          </div>
+        }
+      </div>
+
+      <!-- Spec 016: Restaurar Contraseña — hidden for own account (FR-002, Decision 7) -->
+      @if (!isEditingOwnAccount) {
+        <div class="form-section">
+          <h3 class="form-section-title">Acceso al Sistema</h3>
+          @if (resetPasswordError) {
+            <div class="form-error-banner" role="alert">{{ resetPasswordError }}</div>
+          }
+          <button type="button" class="btn-reset-password" (click)="openResetConfirm()"
+                  title="Generar nueva contraseña temporal para este usuario">
+            <span class="material-symbols-outlined" aria-hidden="true">lock_reset</span>
+            Restaurar Contraseña
+          </button>
+          <p class="form-field-hint">
+            Genera una contraseña temporal. Se mostrará una sola vez para entregársela al
+            usuario por un canal alternativo.
+          </p>
+        </div>
+      }
+
+      <div class="form-section">
+        <h3 class="form-section-title">Estado</h3>
+        <div class="status-toggle-card">
+          <div class="status-toggle-info">
+            <p class="status-toggle-label">Usuario Activo</p>
+            <p class="status-toggle-desc">
+              {{ editForm.enabled ? 'El usuario puede acceder al sistema.' : 'El usuario no puede acceder al sistema.' }}
+            </p>
+          </div>
+          <label class="toggle" aria-label="Activar o desactivar usuario">
+            <input class="toggle-input" type="checkbox" [(ngModel)]="editForm.enabled" />
+            <div class="toggle-track toggle-track--lg"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-panel-footer">
+      <button class="btn-cancel" type="button" (click)="closeEditPanel()">Cancelar</button>
+      <button class="btn-save" type="button" [disabled]="isSavingEdit" (click)="saveEditOperator()">
+        @if (isSavingEdit) { Guardando… } @else { Guardar Cambios }
+      </button>
+    </div>
+  </aside>
+}
+
+<!-- ── Spec 016: Confirmation modal ─────────────────────────────────────────── -->
+@if (facade.state().activePanel === 'edit' && isResetConfirming) {
+  <div class="reset-modal-backdrop" aria-hidden="true"></div>
+  <div class="reset-modal" role="alertdialog" aria-modal="true"
+       aria-labelledby="reset-confirm-title"
+       cdkTrapFocus cdkTrapFocusAutoCapture="true">
+    <div class="reset-modal-header">
+      <span class="material-symbols-outlined reset-modal-icon--warn" aria-hidden="true">warning</span>
+      <h3 id="reset-confirm-title" class="reset-modal-title">¿Restaurar contraseña?</h3>
+    </div>
+    <div class="reset-modal-body">
+      <p>La contraseña actual del usuario quedará <strong>invalidada</strong> inmediatamente.
+         Al iniciar sesión, el sistema solicitará establecer una nueva contraseña.</p>
+      @if (resetPasswordError) {
+        <div class="form-error-banner" role="alert">{{ resetPasswordError }}</div>
+      }
+    </div>
+    <div class="reset-modal-footer">
+      <button class="btn-cancel" type="button" (click)="cancelReset()" [disabled]="isResettingPassword">
+        Cancelar
+      </button>
+      <button class="btn-save" type="button" (click)="confirmReset()" [disabled]="isResettingPassword">
+        @if (isResettingPassword) {
+          <span class="spinner-inline" aria-hidden="true"></span>
+          Procesando…
+        } @else {
+          Confirmar restauración
+        }
+      </button>
+    </div>
+  </div>
+}
+
+<!-- ── Spec 016: Result modal — shows temporary password once ─────────────────── -->
+@if (facade.state().activePanel === 'edit' && isShowingResetResult) {
+  <div class="reset-modal-backdrop" aria-hidden="true"></div>
+  <div class="reset-modal" role="dialog" aria-modal="true"
+       aria-labelledby="reset-result-title"
+       cdkTrapFocus cdkTrapFocusAutoCapture="true">
+    <div class="reset-modal-header">
+      <span class="material-symbols-outlined reset-modal-icon--success" aria-hidden="true">key</span>
+      <h3 id="reset-result-title" class="reset-modal-title">Contraseña restaurada</h3>
+    </div>
+    <div class="reset-modal-body">
+      <p>Cópiela y entréguela al usuario por un canal seguro.
+         <strong>No se volverá a mostrar.</strong></p>
+      <div class="temp-password-display">
+        <span class="temp-password-text" [attr.aria-label]="'Contraseña temporal: ' + resetTemporaryPassword">
+          {{ resetTemporaryPassword }}
+        </span>
+        <button
+          type="button"
+          class="btn-copy"
+          [class.btn-copy--copied]="isCopied"
+          (click)="copyTempPassword()"
+          [attr.aria-label]="isCopied ? 'Contraseña copiada' : 'Copiar contraseña'"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">
+            {{ isCopied ? 'check' : 'content_copy' }}
+          </span>
+          {{ isCopied ? 'Copiado' : 'Copiar' }}
+        </button>
+      </div>
+    </div>
+    <div class="reset-modal-footer">
+      <button class="btn-save" type="button" (click)="closeResetResult()">
+        Entendido
+      </button>
+    </div>
+  </div>
+}
+
+<!-- ── Detail Panel ─────────────────────────────────────────────────────────── -->
+@if (facade.state().activePanel === 'detail') {
+  <div
+    class="overlay-backdrop"
+    @fadeBackdrop
+    (click)="closeDetailPanel()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+  <aside class="side-panel" @slideInPanel role="dialog" aria-modal="true" aria-label="Detalles del usuario">
+    <div class="side-panel-header">
+      <div>
+        <h2 class="side-panel-title">Detalle del Usuario</h2>
+        <p class="side-panel-sub">Información completa del usuario.</p>
+      </div>
+      <button class="close-btn" type="button" (click)="closeDetailPanel()" aria-label="Cerrar panel">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <div class="side-panel-body">
+      @if (!detailOperator) {
+        <div class="detail-loading">
+          <span class="material-symbols-outlined autocomplete-spin">progress_activity</span>
+          Cargando detalles…
+        </div>
+      } @else {
+        <div class="form-section">
+          <div class="operator-identity detail-identity">
+            <div class="operator-avatar operator-avatar--lg" aria-hidden="true">{{ detailOperator.initials }}</div>
+            <div class="operator-meta">
+              <p class="operator-name">{{ detailOperator.fullName }}</p>
+              <p class="operator-email">{{ detailOperator.email }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="form-section">
+          <h3 class="form-section-title">Información Personal</h3>
+          <div class="detail-row">
+            <span class="detail-label">DNI</span>
+            <span class="detail-value">{{ detailOperator.dni }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Rol</span>
+            <span class="detail-value">{{ roleLabel(detailOperator.role) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Estado</span>
+            <span
+              class="status-badge"
+              [class.status-badge--active]="detailOperator.status === 'ACTIVO'"
+              [class.status-badge--inactive]="detailOperator.status === 'INACTIVO'"
+            >
+              <span class="status-dot" aria-hidden="true"></span>
+              {{ statusLabel(detailOperator.status) }}
+            </span>
+          </div>
+        </div>
+        <div class="form-section">
+          <h3 class="form-section-title">Agente Asignado</h3>
+          @if (detailOperator.agentName) {
+            <div class="detail-row">
+              <span class="detail-label">Agente</span>
+              <span class="detail-value">{{ detailOperator.agentName }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Código</span>
+              <span class="detail-value data-mono">{{ detailOperator.agentCode }}</span>
+            </div>
+          } @else {
+            <p class="detail-empty">Sin agente asignado</p>
+          }
+        </div>
+        <div class="form-section">
+          <h3 class="form-section-title">Última Conexión</h3>
+          <div class="detail-row">
+            <span class="detail-label">Fecha</span>
+            <span class="detail-value">{{ formatConnectionDate(detailOperator.lastConnectionAt) }}</span>
+          </div>
+          @if (detailOperator.lastConnectionDetail) {
+            <div class="detail-row">
+              <span class="detail-label">Detalle</span>
+              <span class="detail-value data-mono">{{ detailOperator.lastConnectionDetail }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="side-panel-footer">
+      <button class="btn-cancel" type="button" (click)="closeDetailPanel()">Cerrar</button>
+    </div>
+  </aside>
+}

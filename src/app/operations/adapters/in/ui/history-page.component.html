@@ -1,0 +1,476 @@
+<div class="history-page">
+
+  <!-- ── Page header ─────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Mis operaciones</h1>
+      <p class="page-subtitle">Historial de transacciones procesadas por su usuario.</p>
+    </div>
+  </div>
+
+  <!-- ── Cancel error toast ─────────────────────────────────────────────── -->
+  @if (cancelErrorMessage()) {
+    <div class="cancel-toast" role="alert" aria-live="assertive">
+      {{ cancelErrorMessage() }}
+    </div>
+  }
+
+  <!-- ── Filter bar ──────────────────────────────────────────────────────── -->
+  <div class="filter-bar" role="search" aria-label="Filtros de operaciones">
+    <!-- Rango de Fechas — Angular Material date range picker -->
+    <div class="filter-group filter-group--date-range">
+      <label class="filter-label">Rango de Fechas</label>
+      <div class="hist-date-trigger" (click)="dateRangePicker.open()">
+        <span class="hist-date-display">
+          {{ dateRangeDisplay || 'Seleccionar fechas' }}
+        </span>
+        <mat-form-field class="hist-date-hidden-field" subscriptSizing="dynamic">
+          <mat-date-range-input [rangePicker]="dateRangePicker" [formGroup]="dateRangeGroup">
+            <input matStartDate formControlName="dateFrom">
+            <input matEndDate formControlName="dateTo">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matIconSuffix [for]="dateRangePicker"></mat-datepicker-toggle>
+          <mat-date-range-picker #dateRangePicker></mat-date-range-picker>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Tipo de Operación -->
+    <div class="filter-group">
+      <label class="filter-label" for="hist-type-filter">Tipo de Operación</label>
+      <div class="select-wrapper">
+        <select id="hist-type-filter" class="filter-select" [formControl]="typeFilter">
+          <option value="">Todos los tipos</option>
+          @for (opType of backendOpTypes(); track opType.id) {
+            <option [value]="opType.id">{{ opType.name }}</option>
+          }
+        </select>
+        <span class="select-icon">
+          <mat-icon aria-hidden="true">expand_more</mat-icon>
+        </span>
+      </div>
+    </div>
+
+    <!-- Estado -->
+    <div class="filter-group">
+      <label class="filter-label" for="hist-status-filter">Estado</label>
+      <div class="select-wrapper">
+        <select id="hist-status-filter" class="filter-select" [formControl]="statusFilter">
+          <option value="">Todos los estados</option>
+          @for (s of statuses; track s.value) {
+            <option [value]="s.value">{{ s.label }}</option>
+          }
+        </select>
+        <span class="select-icon">
+          <mat-icon aria-hidden="true">expand_more</mat-icon>
+        </span>
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button type="button" class="btn-limpiar" (click)="clearFilters()" aria-label="Limpiar filtros">
+        Limpiar
+      </button>
+      <button type="button" class="btn-filtrar" (click)="applyFilters()" aria-label="Aplicar filtros">
+        Filtrar
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Table card ──────────────────────────────────────────────────────── -->
+  <div class="table-card">
+
+    @if (state.status === 'error') {
+      <p class="history-error" data-testid="history-error" role="alert">
+        {{ state.errorMessage || 'No se pudo cargar el historial.' }}
+      </p>
+    } @else {
+      <div class="table-scroll" aria-live="polite">
+        <table class="ops-table" aria-label="Tabla de operaciones registradas">
+          <thead>
+            <tr>
+              <th scope="col">Fecha / Hora</th>
+              <th scope="col">Agente</th>
+              <th scope="col">Tipo Operación</th>
+              <th scope="col" class="col-right">Monto</th>
+              <th scope="col">Estado</th>
+              <th scope="col" class="col-center">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @if (isLoading) {
+              @for (row of skeletonRows; track row.id) {
+                <tr class="row-skeleton" aria-hidden="true">
+                  <td><span class="skeleton-bar"></span></td>
+                  <td><span class="skeleton-bar"></span></td>
+                  <td><span class="skeleton-bar"></span></td>
+                  <td><span class="skeleton-bar"></span></td>
+                  <td><span class="skeleton-bar skeleton-bar--short"></span></td>
+                  <td></td>
+                </tr>
+              }
+            } @else {
+              @for (op of pagedOperations(); track op.id) {
+                <tr
+                  data-testid="operation-item"
+                  [class.row-cancelled]="op.status === 'CANCELLED'"
+                >
+                  <td class="cell-mono">
+                    <time [dateTime]="op.registeredAt">{{ formatDate(op.registeredAt) }}</time>
+                  </td>
+                  <td class="cell-mono cell-muted">—</td>
+                  <td class="cell-body">{{ formatType(op.type) }}</td>
+                  <td class="cell-mono col-right cell-amount">S/ {{ formatAmount(op.amount) }}</td>
+                  <td>
+                    <span [class]="statusChipClass(op.status)">
+                      <span class="chip-dot" aria-hidden="true"></span>
+                      {{ formatStatus(op.status) }}
+                    </span>
+                  </td>
+                  <td class="col-center">
+                    <div class="action-group">
+                      <!-- View detail button → opens read-only side panel -->
+                      <button
+                        mat-icon-button
+                        class="action-btn action-btn--view"
+                        data-testid="btn-view-detail"
+                        matTooltip="Ver detalle"
+                        [attr.aria-label]="'Ver detalle de operación'"
+                        (click)="onViewDetailClick(op)"
+                      >
+                        <mat-icon aria-hidden="true">open_in_new</mat-icon>
+                      </button>
+                      <!-- Edit button → opens edit side panel -->
+                      <button
+                        mat-icon-button
+                        class="action-btn action-btn--edit"
+                        data-testid="btn-edit-operation"
+                        [disabled]="op.status === 'CANCELLED'"
+                        [matTooltip]="op.status === 'CANCELLED' ? 'Operación anulada' : 'Editar operación'"
+                        [attr.aria-label]="op.status === 'CANCELLED' ? 'Operación anulada — no editable' : 'Editar operación'"
+                        (click)="op.status !== 'CANCELLED' && onEditClick(op)"
+                      >
+                        <mat-icon aria-hidden="true">edit</mat-icon>
+                      </button>
+                      <!-- Cancel button → opens confirmation modal -->
+                      <button
+                        mat-icon-button
+                        class="action-btn action-btn--cancel"
+                        data-testid="btn-cancel-operation"
+                        [disabled]="op.status === 'CANCELLED'"
+                        [matTooltip]="op.status === 'CANCELLED' ? 'Ya anulada' : 'Anular operación'"
+                        [attr.aria-label]="op.status === 'CANCELLED' ? 'Operación ya anulada' : 'Anular operación'"
+                        (click)="op.status !== 'CANCELLED' && onCancelClick(op)"
+                      >
+                        <mat-icon aria-hidden="true">block</mat-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+
+              @if (!isLoading && pagedOperations().length === 0) {
+                <tr>
+                  <td colspan="6" class="empty-row" data-testid="empty-history" role="status">
+                    <mat-icon aria-hidden="true">inbox</mat-icon>
+                    <span>Aún no hay operaciones registradas.</span>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination footer -->
+      <div class="pagination-bar">
+        <p class="pagination-info">
+          @if (totalCount() === 0) {
+            Sin operaciones
+          } @else {
+            Mostrando {{ paginationStart() }} – {{ paginationEnd() }} de {{ totalCount() }} operaciones
+          }
+        </p>
+        <div class="pagination-controls">
+          <button
+            mat-icon-button
+            [disabled]="isFirstPage()"
+            (click)="prevPage()"
+            aria-label="Página anterior"
+          >
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            [disabled]="isLastPage()"
+            (click)="nextPage()"
+            aria-label="Página siguiente"
+          >
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+
+  </div>
+</div>
+
+<!-- ── View Detail Side Panel (read-only) ────────────────────────────────── -->
+@if (detailPanelOp()) {
+  <div
+    class="overlay-backdrop"
+    @fadeBackdrop
+    (click)="closeDetailPanel()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+  <aside
+    class="side-panel"
+    @slideInPanel
+    role="dialog"
+    aria-modal="true"
+    aria-label="Detalle de operación"
+  >
+    <!-- Panel header -->
+    <div class="side-panel-header">
+      <div class="side-panel-header-left">
+        <span class="material-symbols-outlined side-panel-icon" aria-hidden="true">receipt_long</span>
+        <div>
+          <h2 class="side-panel-title">Detalle de Operación</h2>
+          <p class="side-panel-sub">{{ detailPanelOp()?.id }}</p>
+        </div>
+      </div>
+      <button
+        class="close-btn"
+        type="button"
+        (click)="closeDetailPanel()"
+        aria-label="Cerrar panel"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <!-- Panel body — all read-only -->
+    <div class="side-panel-body">
+      <div class="detail-section">
+        <p class="detail-section-title">Información general</p>
+
+        <!-- Estado -->
+        <div class="detail-row">
+          <span class="detail-label">Estado</span>
+          <span [class]="statusChipClass(detailPanelOp()!.status)">
+            <span class="chip-dot" aria-hidden="true"></span>
+            {{ formatStatus(detailPanelOp()!.status) }}
+          </span>
+        </div>
+
+        <!-- Fecha y Hora -->
+        <div class="detail-row">
+          <span class="detail-label">Fecha y Hora</span>
+          <span class="detail-value detail-value--mono">{{ formatDate(detailPanelOp()!.registeredAt) }}</span>
+        </div>
+
+        <!-- Tipo -->
+        <div class="detail-row">
+          <span class="detail-label">Tipo de Operación</span>
+          <span class="detail-value">{{ formatType(detailPanelOp()!.type) }}</span>
+        </div>
+
+        <!-- Monto -->
+        <div class="detail-row">
+          <span class="detail-label">Monto</span>
+          <span class="detail-value detail-value--amount">S/ {{ formatAmount(detailPanelOp()!.amount) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel footer -->
+    <div class="side-panel-footer">
+      <button class="btn-cancel" type="button" (click)="closeDetailPanel()">
+        Cerrar
+      </button>
+    </div>
+  </aside>
+}
+
+<!-- ── Edit Side Panel ────────────────────────────────────────────────────── -->
+@if (editPanelOp()) {
+  <div
+    class="overlay-backdrop"
+    @fadeBackdrop
+    (click)="closeEditPanel()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+  <aside
+    class="side-panel"
+    @slideInPanel
+    role="dialog"
+    aria-modal="true"
+    aria-label="Editar operación"
+  >
+    <!-- Panel header -->
+    <div class="side-panel-header">
+      <div class="side-panel-header-left">
+        <span class="material-symbols-outlined side-panel-icon" aria-hidden="true">edit_square</span>
+        <div>
+          <h2 class="side-panel-title">Editar Operación</h2>
+          <p class="side-panel-sub">ID: {{ editPanelOp()?.id }}</p>
+        </div>
+      </div>
+      <button
+        class="close-btn"
+        type="button"
+        [disabled]="isSaving()"
+        (click)="closeEditPanel()"
+        aria-label="Cerrar panel"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <!-- Panel body -->
+    <div class="side-panel-body">
+      @if (editErrorMessage()) {
+        <div class="form-error-banner" role="alert">{{ editErrorMessage() }}</div>
+      }
+
+      <form [formGroup]="editForm" class="form-layout" novalidate>
+
+        <!-- Tipo de operación -->
+        <div class="form-field">
+          <label class="form-label" for="edit-type">
+            Tipo de Operación <span class="form-required">*</span>
+          </label>
+          <div class="form-select-wrapper">
+            <select
+              id="edit-type"
+              class="form-input form-input--select"
+              formControlName="type"
+              aria-label="Tipo de operación"
+            >
+              @for (opType of backendOpTypes(); track opType.id) {
+                <option [value]="opType.id">{{ opType.name }}</option>
+              }
+            </select>
+            <span class="form-select-icon">
+              <mat-icon aria-hidden="true">expand_more</mat-icon>
+            </span>
+          </div>
+          @if (editForm.controls.type.invalid && editForm.controls.type.touched) {
+            <p class="form-field-error" role="alert">Seleccione un tipo de operación.</p>
+          }
+        </div>
+
+        <!-- Monto -->
+        <div class="form-field">
+          <label class="form-label" for="edit-amount">
+            Monto <span class="form-required">*</span>
+          </label>
+          <div class="input-prefix-wrapper">
+            <span class="input-prefix">S/</span>
+            <input
+              class="form-input form-input--prefix"
+              id="edit-amount"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              formControlName="amount"
+              placeholder="Ej: 1250.50"
+              aria-label="Monto de la operación"
+            />
+          </div>
+          @if (editForm.controls.amount.invalid && editForm.controls.amount.touched) {
+            <p class="form-field-error" role="alert">Ingrese un monto válido mayor que cero.</p>
+          }
+        </div>
+
+        <!-- Información de la operación (read-only) -->
+        <div class="detail-section">
+          <p class="detail-section-title">Información de la operación</p>
+          <div class="detail-row">
+            <span class="detail-label">Fecha y Hora</span>
+            <span class="detail-value detail-value--mono">{{ formatDate(editPanelOp()!.registeredAt) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Estado</span>
+            <span [class]="statusChipClass(editPanelOp()!.status)">
+              <span class="chip-dot" aria-hidden="true"></span>
+              {{ formatStatus(editPanelOp()!.status) }}
+            </span>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Panel footer -->
+    <div class="side-panel-footer">
+      <button
+        class="btn-cancel"
+        type="button"
+        [disabled]="isSaving()"
+        (click)="closeEditPanel()"
+      >
+        Cancelar
+      </button>
+      <button
+        class="btn-save"
+        type="button"
+        [disabled]="editForm.invalid || isSaving()"
+        (click)="onSaveEdit()"
+      >
+        @if (isSaving()) { Guardando… } @else { Guardar Cambios }
+      </button>
+    </div>
+  </aside>
+}
+
+<!-- ── Cancel Confirmation Modal ─────────────────────────────────────────── -->
+@if (cancelConfirmOp()) {
+  <div
+    class="modal-backdrop"
+    @fadeBackdrop
+    (click)="dismissCancelConfirm()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+  <div
+    class="confirm-dialog"
+    @fadeBackdrop
+    role="alertdialog"
+    aria-modal="true"
+    aria-label="Confirmar anulación"
+  >
+    <div class="confirm-dialog-icon">
+      <span class="material-symbols-outlined" aria-hidden="true">block</span>
+    </div>
+    <h3 class="confirm-dialog-title">¿Anular operación?</h3>
+    <p class="confirm-dialog-body">
+      Esta acción anulará la operación del
+      <strong>{{ formatDate(cancelConfirmOp()!.registeredAt) }}</strong>
+      por el monto de
+      <strong>S/ {{ formatAmount(cancelConfirmOp()!.amount) }}</strong>.
+      Esta acción <strong>no se puede deshacer</strong>.
+    </p>
+    <div class="confirm-dialog-actions">
+      <button
+        class="btn-dialog-secondary"
+        type="button"
+        [disabled]="isCancelling()"
+        (click)="dismissCancelConfirm()"
+      >
+        Volver
+      </button>
+      <button
+        class="btn-dialog-danger"
+        type="button"
+        [disabled]="isCancelling()"
+        (click)="confirmCancel()"
+      >
+        @if (isCancelling()) { Anulando… } @else { Sí, anular }
+      </button>
+    </div>
+  </div>
+}

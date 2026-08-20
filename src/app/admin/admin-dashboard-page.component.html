@@ -1,0 +1,424 @@
+<div class="admin-dashboard">
+  <div class="admin-dashboard-inner">
+
+    <!-- ── Page Header ───────────────────────────────────────────────────── -->
+    <div class="page-header">
+      <div class="page-header-text">
+        <h1 class="page-title">Centro de Control Nacional</h1>
+        <p class="page-subtitle">
+          Resumen de operaciones financieras diarias, flujo de caja y rendimiento de agentes.
+        </p>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn-outline" type="button" (click)="onExportarReporte()">
+          <span class="material-symbols-outlined" aria-hidden="true">download</span>
+          Exportar Reporte
+        </button>
+        <button class="btn-primary" type="button" (click)="onActualizarDatos()">
+          <span class="material-symbols-outlined" aria-hidden="true">autorenew</span>
+          Actualizar Datos
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Filters Panel ─────────────────────────────────────────────────── -->
+    <section class="filters-panel" aria-label="Filtros Globales">
+      <div class="filters-panel-header">
+        <span class="material-symbols-outlined" aria-hidden="true">filter_alt</span>
+        <h3 class="filters-title">FILTROS GLOBALES</h3>
+        <button class="btn-clear btn-clear--header" type="button" (click)="onLimpiar()">Limpiar</button>
+      </div>
+      <div class="filters-grid">
+
+        <!-- Rango de Fechas — select only; date inputs appear as separate full-width row below -->
+        <div class="filter-field">
+          <label class="filter-label" for="f-range">Rango de Fechas</label>
+          <select id="f-range" class="filter-select"
+                  [value]="selectedDateRange()"
+                  (change)="onDateRangeChange($event)">
+            <option value="HOY">Hoy</option>
+            <option value="AYER">Ayer</option>
+            <option value="ULTIMOS_7_DIAS">Últimos 7 Días</option>
+            <option value="ESTE_MES">Este Mes</option>
+            <option value="PERSONALIZADO">Rango Personalizado...</option>
+          </select>
+        </div>
+
+        <!-- Región (= department in backend) -->
+        <div class="filter-field">
+          <label class="filter-label" for="f-region">Región</label>
+          <select id="f-region" class="filter-select"
+                  (change)="onRegionChange($event)">
+            <option value="">Todas las Regiones</option>
+            @for (dept of departments(); track dept.id) {
+              <option [value]="dept.id">{{ dept.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Provincia -->
+        <div class="filter-field">
+          <label class="filter-label" for="f-prov">Provincia</label>
+          <select id="f-prov" class="filter-select"
+                  [disabled]="provinces().length === 0"
+                  (change)="onProvinceChange($event)">
+            <option value="">{{ provinces().length === 0 ? 'Seleccione Región Primero' : 'Todas las Provincias' }}</option>
+            @for (prov of provinces(); track prov.id) {
+              <option [value]="prov.id">{{ prov.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Distrito -->
+        <div class="filter-field">
+          <label class="filter-label" for="f-dist">Distrito</label>
+          <select id="f-dist" class="filter-select"
+                  [disabled]="districts().length === 0"
+                  (change)="onDistrictChange($event)">
+            <option value="">{{ districts().length === 0 ? 'Seleccione Provincia Primero' : 'Todos los Distritos' }}</option>
+            @for (dist of districts(); track dist.id) {
+              <option [value]="dist.id">{{ dist.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Operador — custom autocomplete matching /users design -->
+        <div class="filter-field">
+          <label class="filter-label" for="f-operator">Operador</label>
+          <div class="operator-search-wrapper">
+            <span class="material-symbols-outlined operator-search-icon" aria-hidden="true">search</span>
+            <input
+              id="f-operator"
+              class="filter-input operator-search-input"
+              type="text"
+              placeholder="Buscar por nombre/ID"
+              [value]="operatorInputValue"
+              (input)="onOperatorInput($any($event.target).value)"
+              (blur)="onOperatorBlur()"
+              autocomplete="off"
+            />
+            @if (showOperatorDropdown) {
+              <div class="operator-autocomplete-dropdown">
+                @if (usersFacade.autocomplete().loading) {
+                  <div class="operator-autocomplete-empty">Buscando...</div>
+                } @else if (usersFacade.autocomplete().results.length === 0) {
+                  <div class="operator-autocomplete-empty">No se encontraron resultados</div>
+                } @else {
+                  @for (item of usersFacade.autocomplete().results; track item.id) {
+                    <button
+                      class="operator-autocomplete-item"
+                      type="button"
+                      (mousedown)="onOperatorSelect(item.fullName)"
+                    >{{ item.fullName }}</button>
+                  }
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Estado de Operación -->
+        <div class="filter-field">
+          <label class="filter-label" for="f-status">Estado de Operación</label>
+          <select id="f-status" class="filter-select"
+                  [value]="selectedStatus()"
+                  (change)="onStatusChange($event)">
+            <option value="TODOS">Todos los Estados</option>
+            <option value="ACTIVO">Activo</option>
+            <option value="CANCELADO">Anulado / Cancelado</option>
+          </select>
+        </div>
+
+        <!-- Rango personalizado — single date range picker (Angular Material, hidden field technique) -->
+        @if (showCustomDateRange()) {
+          <div class="custom-date-row">
+            <div class="filter-field">
+              <label class="filter-label">Rango Personalizado</label>
+              <div class="dash-date-trigger" (click)="dashDatePicker.open()">
+                <span class="material-symbols-outlined dash-date-icon" aria-hidden="true">calendar_today</span>
+                <span class="dash-date-display">
+                  {{ dateRangeDisplay || 'Seleccionar fechas' }}
+                </span>
+                <mat-form-field class="dash-date-hidden-field" subscriptSizing="dynamic">
+                  <mat-date-range-input [rangePicker]="dashDatePicker" [formGroup]="dateRangeGroup">
+                    <input matStartDate formControlName="fechaInicio">
+                    <input matEndDate formControlName="fechaFin">
+                  </mat-date-range-input>
+                  <mat-datepicker-toggle matIconSuffix [for]="dashDatePicker"></mat-datepicker-toggle>
+                  <mat-date-range-picker #dashDatePicker></mat-date-range-picker>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+    </section>
+
+    <!-- ── KPI Grid (4 cards) ────────────────────────────────────────────── -->
+    <div class="kpi-grid" role="list" aria-label="Indicadores clave de rendimiento">
+
+      @if (facade.summaryState().status === 'loading') {
+        <div class="kpi-card kpi-skeleton" role="listitem"></div>
+        <div class="kpi-card kpi-skeleton" role="listitem"></div>
+        <div class="kpi-card kpi-skeleton" role="listitem"></div>
+        <div class="kpi-card kpi-skeleton" role="listitem"></div>
+      } @else if (facade.summaryState().status === 'error') {
+        <div class="kpi-error col-span-4" role="listitem">
+          <span>Error al cargar KPIs. Use 'Actualizar Datos' para reintentar.</span>
+        </div>
+      } @else {
+        <!-- KPI 1: Monto Bruto Operado -->
+        <div class="kpi-card kpi-card--gross" role="listitem">
+          <div class="kpi-card-top">
+            <span class="kpi-label">MONTO BRUTO OPERADO</span>
+            <div class="kpi-icon-wrap kpi-icon-wrap--blue">
+              <span class="material-symbols-outlined" aria-hidden="true">account_balance</span>
+            </div>
+          </div>
+          <div class="kpi-body">
+            <h3 class="kpi-value kpi-value--lg tabular-nums">
+              {{ formatSoles(facade.summaryState().data?.montoBrutoOperado) }}
+            </h3>
+            <div class="kpi-trend">
+              <span class="material-symbols-outlined kpi-trend-icon" aria-hidden="true">trending_up</span>
+              <span class="kpi-trend-text kpi-trend-text--positive">
+                {{ formatPct(facade.summaryState().data?.variacionPorcentaje) }} vs ayer
+              </span>
+            </div>
+          </div>
+          <span class="kpi-bg-icon material-symbols-outlined" aria-hidden="true">account_balance</span>
+        </div>
+
+        <!-- KPI 2: Total Entradas -->
+        <div class="kpi-card" role="listitem">
+          <div class="kpi-card-top">
+            <span class="kpi-label">TOTAL ENTRADAS</span>
+            <div class="kpi-icon-wrap kpi-icon-wrap--green">
+              <span class="material-symbols-outlined" aria-hidden="true">download</span>
+            </div>
+          </div>
+          <div class="kpi-body">
+            <h3 class="kpi-value tabular-nums">{{ formatSoles(facade.summaryState().data?.totalEntradas) }}</h3>
+            <div class="kpi-ops tabular-nums">{{ facade.summaryState().data?.totalOps ?? 0 }} ops</div>
+          </div>
+        </div>
+
+        <!-- KPI 3: Total Salidas -->
+        <div class="kpi-card" role="listitem">
+          <div class="kpi-card-top">
+            <span class="kpi-label">TOTAL SALIDAS</span>
+            <div class="kpi-icon-wrap kpi-icon-wrap--red">
+              <span class="material-symbols-outlined" aria-hidden="true">upload</span>
+            </div>
+          </div>
+          <div class="kpi-body">
+            <h3 class="kpi-value tabular-nums">{{ formatSoles(facade.summaryState().data?.totalSalidas) }}</h3>
+            <div class="kpi-ops tabular-nums">{{ facade.summaryState().data?.operacionesAnuladas ?? 0 }} anuladas</div>
+          </div>
+        </div>
+
+        <!-- KPI 4: Movimiento Neto -->
+        <div class="kpi-card" role="listitem">
+          <div class="kpi-card-top">
+            <span class="kpi-label">MOVIMIENTO NETO</span>
+            <div class="kpi-icon-wrap kpi-icon-wrap--neutral">
+              <span class="material-symbols-outlined" aria-hidden="true">sync_alt</span>
+            </div>
+          </div>
+          <div class="kpi-body">
+            <h3 class="kpi-value tabular-nums">
+              {{ (facade.summaryState().data?.movimientoNeto ?? 0) >= 0 ? '+' : '' }}{{ formatSoles(facade.summaryState().data?.movimientoNeto) }}
+            </h3>
+            <div class="kpi-net-label">
+              <span class="kpi-net-dot" aria-hidden="true"></span>
+              <span>{{ facade.summaryState().data?.liquidezIndicator === 'SUPERAVIT' ? 'Superávit de Liquidez' : 'Déficit de Liquidez' }}</span>
+            </div>
+          </div>
+        </div>
+      }
+
+    </div>
+
+    <!-- ── Secondary Metrics Bar — 4 cells (TIENDAS ACTIVAS removed) ──────── -->
+    <div class="metrics-bar" role="list" aria-label="Métricas secundarias">
+      @if (facade.summaryState().status === 'loading') {
+        <div class="metrics-bar-cell metrics-skeleton" role="listitem"></div>
+        <div class="metrics-bar-cell metrics-skeleton" role="listitem"></div>
+        <div class="metrics-bar-cell metrics-skeleton" role="listitem"></div>
+        <div class="metrics-bar-cell metrics-skeleton" role="listitem"></div>
+      } @else {
+        <div class="metrics-bar-cell" role="listitem">
+          <span class="metrics-bar-value tabular-nums">{{ facade.summaryState().data?.totalOps ?? 0 | number }}</span>
+          <span class="metrics-bar-label">TOTAL OPS</span>
+        </div>
+        <div class="metrics-bar-cell" role="listitem">
+          <span class="metrics-bar-value tabular-nums">{{ facade.summaryState().data?.operadoresActivos ?? 0 | number }}</span>
+          <span class="metrics-bar-label">OPERADORES ACTIVOS</span>
+        </div>
+        <div class="metrics-bar-cell" role="listitem">
+          <span class="metrics-bar-value tabular-nums">{{ facade.summaryState().data?.agentesActivos ?? 0 | number }}</span>
+          <span class="metrics-bar-label">AGENTES ACTIVOS</span>
+        </div>
+        <div class="metrics-bar-cell" role="listitem">
+          <span class="metrics-bar-value metrics-bar-value--error tabular-nums">{{ facade.summaryState().data?.operacionesAnuladas ?? 0 | number }}</span>
+          <span class="metrics-bar-label">OPERACIONES ANULADAS</span>
+        </div>
+      }
+    </div>
+
+    <!-- ── Charts Row 1: Evolution Line + Por Agente Doughnut ─────────────── -->
+    <div class="charts-row">
+
+      <!-- Main: Evolution line chart -->
+      <div class="chart-card chart-card--main">
+        <div class="chart-card-header">
+          <div>
+            <h3 class="chart-card-title">Evolución de Operaciones</h3>
+            <p class="chart-card-sub">Volumen por hora de transacciones (Hoy)</p>
+          </div>
+          <div class="chart-tab-group" role="group" aria-label="Modo de vista">
+            <button class="chart-tab" [class.chart-tab--active]="volValMode() === 'vol'"
+                    type="button" (click)="onVolVal('vol')">Vol</button>
+            <button class="chart-tab" [class.chart-tab--active]="volValMode() === 'val'"
+                    type="button" (click)="onVolVal('val')">Val</button>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <!-- Canvas always in DOM so @ViewChild resolves in ngAfterViewInit (T047) -->
+          <canvas #evolutionChart role="img" aria-label="Gráfico de evolución de operaciones por hora"></canvas>
+          @if (facade.evolutionState().status === 'loading') {
+            <div class="chart-overlay chart-skeleton" role="status" aria-label="Cargando gráfica de evolución"></div>
+          } @else if (facade.evolutionState().status === 'error') {
+            <div class="chart-overlay chart-error-overlay">Error al cargar datos de evolución. Use 'Actualizar Datos' para reintentar.</div>
+          }
+        </div>
+      </div>
+
+      <!-- Side: Por Agente doughnut chart (NOT "Por Agente Bancario") -->
+      <div class="chart-card chart-card--side">
+        <h3 class="chart-card-title">Por Agente</h3>
+        <p class="chart-card-sub">Distribución del volumen</p>
+
+        <!-- Panel-level filters (Por Región / Por Agente) — mutually exclusive -->
+        <div class="agent-panel-filters">
+          <div class="filter-field">
+            <label class="filter-label" for="ap-region">Por Región</label>
+            <select id="ap-region" class="filter-select"
+                    (change)="onAgentPanelRegionChange($event)">
+              <option value="">Todas las Regiones</option>
+              @for (dept of departments(); track dept.id) {
+                <option [value]="dept.id.toString()">{{ dept.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="filter-field">
+            <label class="filter-label" for="ap-agent">Por Agente</label>
+            <select id="ap-agent" class="filter-select"
+                    (change)="onAgentPanelAgentChange($event)">
+              <option value="">Todos los Agentes</option>
+              @for (seg of (facade.agentDistState().data?.segments ?? []); track seg.id) {
+                @if (facade.agentDistState().data?.mode === 'AGGREGATE') {
+                  <option [value]="seg.id.toString()">{{ seg.name }}</option>
+                }
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Canvas always in DOM so @ViewChild resolves (T050 — completes T047 fix) -->
+        <div class="doughnut-wrap">
+          <canvas #agentDoughnutChart role="img" aria-label="Distribución de volumen por agente"></canvas>
+          @if (facade.agentDistState().status === 'loading') {
+            <div class="chart-overlay doughnut-skeleton" role="status"></div>
+          } @else if (facade.agentDistState().status === 'error') {
+            <div class="chart-overlay chart-error-overlay">Error al cargar datos de agentes. Use 'Actualizar Datos'.</div>
+          }
+        </div>
+        <!-- Dynamic legend — only visible when content is available -->
+        @if (facade.agentDistState().status === 'content') {
+          <ul class="doughnut-legend" aria-label="Leyenda de agentes">
+            @for (seg of (facade.agentDistState().data?.segments ?? []); track seg.id) {
+              <li class="doughnut-legend-row">
+                <div class="doughnut-legend-left">
+                  <span class="legend-dot"
+                        [style.background-color]="['#0b1c30','#505f76','#bec6e0','#eae7e9'][seg.colorIndex % 4]"
+                        aria-hidden="true"></span>
+                  <span class="legend-label">{{ seg.name }}</span>
+                </div>
+                <span class="legend-pct tabular-nums">{{ seg.percentage | number:'1.0-1' }}%</span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+    </div>
+
+    <!-- ── Charts Row 2: Flow Bar + Top Operators ────────────────────────── -->
+    <div class="charts-row charts-row--bottom">
+
+      <!-- Bar chart: Flujos por región -->
+      <div class="chart-card chart-card--main">
+        <div class="chart-card-header">
+          <div>
+            <h3 class="chart-card-title">Comparación de Flujos</h3>
+            <p class="chart-card-sub">Entradas vs Salidas por Región</p>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <!-- Canvas always in DOM so @ViewChild resolves (T047) -->
+          <canvas #flowBarChart role="img" aria-label="Comparación de flujos de entradas vs salidas por región"></canvas>
+          @if (facade.flowState().status === 'loading') {
+            <div class="chart-overlay chart-skeleton" role="status"></div>
+          } @else if (facade.flowState().status === 'error') {
+            <div class="chart-overlay chart-error-overlay">Error al cargar datos de flujos. Use 'Actualizar Datos'.</div>
+          }
+        </div>
+      </div>
+
+      <!-- Top Operators list (backed by agents with most operations) -->
+      <div class="chart-card chart-card--side">
+        <div class="top-ops-header">
+          <h3 class="chart-card-title">Top Operadores</h3>
+          <span class="top-ops-subtitle">Por Cantidad de Ops</span>
+        </div>
+
+        @if (facade.topOpsState().status === 'loading') {
+          <div class="list-skeleton" role="status"></div>
+        } @else if (facade.topOpsState().status === 'error') {
+          <div class="chart-error">Error al cargar top operadores. Use 'Actualizar Datos'.</div>
+        } @else {
+          <ul class="top-ops-list" aria-label="Top operadores por cantidad de operaciones">
+            @for (op of (facade.topOpsState().data?.operators ?? []); track op.id; let i = $index) {
+              <li class="top-ops-item">
+                <div class="top-ops-left">
+                  <div class="op-avatar"
+                       [class.op-avatar--active]="i === 0"
+                       aria-hidden="true">
+                    {{ op.initials }}
+                  </div>
+                  <div class="op-info">
+                    <div class="op-name">{{ op.fullName }}</div>
+                    <div class="op-id-row">
+                      <span class="op-status-dot"
+                            [class.op-status-dot--active]="op.cancellationPct === 0"
+                            aria-hidden="true"></span>
+                      <span class="op-id">ID: {{ op.id }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="op-ops tabular-nums">{{ op.operationCount | number }} ops</div>
+              </li>
+            }
+            @empty {
+              <li class="top-ops-empty">Sin datos para el período seleccionado.</li>
+            }
+          </ul>
+        }
+      </div>
+
+    </div>
+
+  </div>
+</div>

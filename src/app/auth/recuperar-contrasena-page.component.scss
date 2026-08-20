@@ -1,0 +1,242 @@
+// ===== Recuperar Contraseña Page — AgenteFlow Design System =====
+
+.recovery-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--af-space-lg);
+  background-color: var(--af-surface-container-low);
+}
+
+.recovery-card {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--af-surface-container-lowest);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 12px;
+  padding: var(--af-space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--af-space-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+.recovery-header {
+  text-align: center;
+}
+
+.recovery-brand {
+  font-family: var(--af-font-headline);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--af-primary);
+  margin: 0 0 4px;
+}
+
+.recovery-brand-sub {
+  font-family: var(--af-font-body);
+  font-size: 13px;
+  color: var(--af-secondary);
+  margin: 0;
+}
+
+// ─── Body ─────────────────────────────────────────────────────────────────────
+.recovery-body {}
+
+.recovery-title {
+  font-family: var(--af-font-headline);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--af-on-surface);
+  margin: 0 0 var(--af-space-xs);
+}
+
+.recovery-description {
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  color: var(--af-on-surface-variant);
+  margin: 0;
+  line-height: 1.5;
+}
+
+// ─── Error Banners ────────────────────────────────────────────────────────────
+.error-banner {
+  background-color: var(--af-error-container);
+  border: 1px solid rgba(186, 26, 26, 0.2);
+  border-radius: 8px;
+  padding: var(--af-space-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--af-space-sm);
+
+  .material-symbols-outlined {
+    color: var(--af-error);
+    font-size: 20px;
+    font-variation-settings: 'FILL' 1;
+    flex-shrink: 0;
+  }
+
+  p {
+    font-family: var(--af-font-body);
+    font-size: 13px;
+    color: var(--af-on-error-container);
+    margin: 0;
+  }
+}
+
+// ─── Form ─────────────────────────────────────────────────────────────────────
+.recovery-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--af-space-md);
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-family: var(--af-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--af-on-surface-variant);
+}
+
+.field-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-icon {
+  position: absolute;
+  left: 10px;
+  font-size: 20px;
+  color: var(--af-secondary);
+  pointer-events: none;
+}
+
+.field-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--af-space-md) 0 38px;
+  background-color: var(--af-surface-container-low);
+  border: 1px solid var(--af-outline-variant);
+  border-radius: 8px;
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  color: var(--af-on-surface);
+  outline: none;
+  transition: border-color 150ms ease, background-color 150ms ease;
+
+  &::placeholder { color: var(--af-outline); }
+
+  &:focus {
+    border-color: var(--af-primary);
+    box-shadow: 0 0 0 1px var(--af-primary);
+    background-color: var(--af-surface-container-lowest);
+  }
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+// ─── Submit Button ────────────────────────────────────────────────────────────
+.btn-submit {
+  width: 100%;
+  height: 48px;
+  background-color: var(--af-primary);
+  border: none;
+  border-radius: 8px;
+  font-family: var(--af-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--af-on-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 150ms ease;
+
+  &:hover:not(:disabled) { opacity: 0.88; }
+
+  &:disabled { opacity: 0.7; cursor: not-allowed; }
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  .material-symbols-outlined.spinning {
+    animation: spin-loader 0.8s linear infinite;
+  }
+}
+
+@keyframes spin-loader {
+  to { transform: rotate(360deg); }
+}
+
+// ─── Confirmation ─────────────────────────────────────────────────────────────
+.recovery-confirmation {
+  text-align: center;
+  padding: var(--af-space-lg) 0;
+}
+
+.confirmation-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: rgba(0, 150, 104, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--af-space-lg);
+
+  .material-symbols-outlined {
+    font-size: 32px;
+    color: var(--af-on-tertiary-container);
+    font-variation-settings: 'FILL' 1;
+  }
+}
+
+.confirmation-title {
+  font-family: var(--af-font-headline);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--af-on-surface);
+  margin: 0 0 var(--af-space-sm);
+}
+
+.confirmation-text {
+  font-family: var(--af-font-body);
+  font-size: 14px;
+  color: var(--af-on-surface-variant);
+  margin: 0;
+  line-height: 1.5;
+}
+
+// ─── Back Link ────────────────────────────────────────────────────────────────
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--af-font-body);
+  font-size: 13px;
+  color: var(--af-secondary);
+  text-decoration: none;
+  transition: color 150ms ease;
+  text-align: center;
+  justify-content: center;
+  width: 100%;
+
+  &:hover { color: var(--af-primary); }
+
+  .material-symbols-outlined { font-size: 16px; }
+}

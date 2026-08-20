@@ -1,0 +1,409 @@
+<div class="agents-page">
+  <div class="agents-page-inner">
+
+    <!-- ── Page Header ──────────────────────────────────────────────────────── -->
+    <div class="page-header">
+      <div class="page-header-text">
+        <h1 class="page-title">Agentes Regionales</h1>
+        <p class="page-subtitle">Gestione y monitoree la distribución de agentes por departamento.</p>
+      </div>
+      <div class="page-header-actions">
+        <div class="filter-search">
+          <div class="search-input-wrapper">
+            <span class="material-symbols-outlined search-icon" aria-hidden="true">search</span>
+            <input
+              class="search-input"
+              id="agents-search"
+              type="text"
+              placeholder="Nombre del agente..."
+              [value]="searchInputValue()"
+              (input)="onSearchInput($any($event.target).value)"
+              (blur)="onSearchBlur()"
+              autocomplete="off"
+              aria-label="Buscar agentes por nombre"
+            />
+            @if (showAutocompleteDropdown()) {
+              <div class="autocomplete-dropdown">
+                @if (autocompleteOptions().length === 0) {
+                  <div class="autocomplete-empty">No se encontraron resultados</div>
+                } @else {
+                  @for (option of autocompleteOptions(); track option.businessName) {
+                    <button
+                      class="autocomplete-item"
+                      type="button"
+                      (mousedown)="onAutocompleteSelect(option)"
+                    >
+                      <span class="autocomplete-name">{{ option.businessName }}</span>
+                      <span class="autocomplete-code">{{ option.agentCode }}</span>
+                    </button>
+                  }
+                }
+              </div>
+            }
+          </div>
+        </div>
+        <button class="btn-primary" type="button" (click)="openAddPanel()">
+          <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          Agregar Agente
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Loading State ─────────────────────────────────────────────────────── -->
+    @if (facade.state().status === 'loading') {
+      <div class="agents-page-inner">
+        @for (i of [1, 2]; track i) {
+          <div class="region-group">
+            <div class="skeleton-card" style="height:24px; width:200px; border-radius:4px; margin-bottom:16px;"></div>
+            <div class="agents-grid">
+              @for (j of [1, 2, 3]; track j) {
+                <div class="skeleton-card agent-card" style="min-height:200px;"></div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── Error State ────────────────────────────────────────────────────────── -->
+    @if (facade.state().status === 'error') {
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 0;gap:16px;">
+        <span class="material-symbols-outlined" style="font-size:48px;color:#ba1a1a;" aria-hidden="true">error_outline</span>
+        <p class="page-subtitle" style="text-align:center;">
+          {{ facade.state().error ?? 'No se pudo cargar la lista de agentes.' }}
+        </p>
+        <button class="btn-primary" type="button" (click)="facade.reload()">
+          <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+          Reintentar
+        </button>
+      </div>
+    }
+
+    <!-- ── Content State ─────────────────────────────────────────────────────── -->
+    @if (facade.state().status === 'content') {
+
+      <!-- Empty state -->
+      @if (filteredRegions().length === 0) {
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 0;gap:16px;">
+          <span class="material-symbols-outlined" style="font-size:48px;color:#76777d;" aria-hidden="true">account_balance</span>
+          @if (searchTerm()) {
+            <p class="page-subtitle" style="text-align:center;">No se encontraron agentes para "{{ searchTerm() }}".</p>
+          } @else {
+            <p class="page-subtitle" style="text-align:center;">No hay agentes registrados aún.</p>
+            <button class="btn-primary" type="button" (click)="openAddPanel()">
+              <span class="material-symbols-outlined" aria-hidden="true">add</span>
+              Registrar primer agente
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Regional Groups -->
+      @for (region of filteredRegions(); track region.department) {
+        <div class="region-group">
+          <div class="region-header">
+            <span class="material-symbols-outlined region-icon" aria-hidden="true">{{ region.icon }}</span>
+            <h3 class="region-title">Región {{ region.department }}</h3>
+            <span class="region-badge">{{ region.activeCount }} Activos</span>
+          </div>
+          <div class="agents-grid">
+            @for (agent of region.agents; track agent.id) {
+              <div
+                class="agent-card"
+                [class.agent-card--inactive]="agent.status === 'INACTIVO'"
+                (click)="openEditPanel(agent)"
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="'Editar ' + agent.businessName"
+              >
+                <!-- Card Top -->
+                <div class="agent-card-top">
+                  <div class="agent-identity">
+                    <div class="agent-avatar agent-avatar--secondary" aria-hidden="true">
+                      {{ agent.businessName.slice(0,2).toUpperCase() }}
+                    </div>
+                    <div class="agent-meta">
+                      <p class="agent-name">{{ agent.businessName }}</p>
+                      <p class="agent-id">{{ agent.agentCode }}</p>
+                    </div>
+                  </div>
+                  <div class="agent-card-top-right">
+                    <div
+                      class="agent-status"
+                      [class.agent-status--inactive]="agent.status === 'INACTIVO'"
+                      aria-label="Estado: {{ agent.status === 'ACTIVO' ? 'Activo' : 'Inactivo' }}"
+                    >
+                      <span
+                        class="status-dot"
+                        [class.status-dot--inactive]="agent.status === 'INACTIVO'"
+                        aria-hidden="true"
+                      ></span>
+                      <span class="status-label">{{ agent.status === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card Details -->
+                <div class="agent-details">
+                  <div class="detail-row">
+                    <span class="material-symbols-outlined detail-icon" aria-hidden="true">location_on</span>
+                    <p class="detail-text">
+                      {{ agent.address }}<br/>
+                      <span class="detail-sub">{{ agent.district }}, {{ agent.province }}, {{ agent.department }}</span>
+                    </p>
+                  </div>
+                  <div class="detail-row">
+                    <span class="material-symbols-outlined detail-icon" aria-hidden="true">phone</span>
+                    <p class="detail-text">{{ agent.phone }}</p>
+                  </div>
+                </div>
+
+                <!-- Card Footer -->
+                <div class="agent-card-footer" (click)="$event.stopPropagation()">
+                  <div class="volume-info">
+                    <span class="volume-label">Volumen Diario</span>
+                    <span class="volume-value" [class.volume-value--inactive]="agent.status === 'INACTIVO'">
+                      S/ {{ agent.dailyVolume }}
+                    </span>
+                  </div>
+                  <label
+                    class="toggle"
+                    [attr.aria-label]="'Activar o desactivar ' + agent.businessName"
+                    (click)="$event.stopPropagation()"
+                  >
+                    <input
+                      class="toggle-input"
+                      type="checkbox"
+                      [checked]="agent.status === 'ACTIVO'"
+                      [disabled]="isTogglePending(agent.id)"
+                      (change)="onToggleStatus(agent)"
+                      [attr.aria-label]="agent.businessName + ': ' + (agent.status === 'ACTIVO' ? 'activo' : 'inactivo')"
+                    />
+                    <div class="toggle-track"></div>
+                  </label>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+
+  </div>
+</div>
+
+<!-- ── Add Agent Side Panel ─────────────────────────────────────────────────── -->
+@if (showAddPanel) {
+  <div
+    class="overlay-backdrop"
+    @fadeBackdrop
+    (click)="closeAddPanel()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+  <aside class="side-panel" @slideInPanel role="dialog" aria-modal="true" aria-label="Nuevo agente">
+    <div class="side-panel-header">
+      <div>
+        <h2 class="side-panel-title">Nuevo Agente</h2>
+        <p class="side-panel-sub">Registrar un nuevo punto regional.</p>
+      </div>
+      <button class="close-btn" type="button" (click)="closeAddPanel()" aria-label="Cerrar panel">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <div class="side-panel-body" [formGroup]="addForm">
+      <!-- Información Básica -->
+      <div class="form-section">
+        <h3 class="form-section-title">Información Básica</h3>
+        <div class="form-field">
+          <label class="form-label" for="add-business-name">Nombre del Negocio *</label>
+          <input class="form-input" id="add-business-name" type="text" formControlName="businessName" placeholder="ej. Bodega La Principal"/>
+          @if (addForm.get('businessName')?.invalid && addForm.get('businessName')?.touched) {
+            <p style="color:#ba1a1a;font-size:11px;margin-top:4px;">Nombre del negocio requerido.</p>
+          }
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="add-owner-name">Nombre del Dueño/Contacto *</label>
+          <input class="form-input" id="add-owner-name" type="text" formControlName="ownerName" placeholder="Nombre Completo"/>
+          @if (addForm.get('ownerName')?.invalid && addForm.get('ownerName')?.touched) {
+            <p style="color:#ba1a1a;font-size:11px;margin-top:4px;">Nombre del contacto requerido.</p>
+          }
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="add-phone">Número de Teléfono *</label>
+          <input class="form-input" id="add-phone" type="tel" formControlName="phone" placeholder="+51"/>
+          @if (addForm.get('phone')?.invalid && addForm.get('phone')?.touched) {
+            <p style="color:#ba1a1a;font-size:11px;margin-top:4px;">Teléfono peruano válido requerido (ej. 987654321).</p>
+          }
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="add-address">Dirección *</label>
+          <input class="form-input" id="add-address" type="text" formControlName="address" placeholder="Av. / Jr. / Calle"/>
+          @if (addForm.get('address')?.invalid && addForm.get('address')?.touched) {
+            <p style="color:#ba1a1a;font-size:11px;margin-top:4px;">Dirección requerida.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Ubicación -->
+      <div class="form-section">
+        <h3 class="form-section-title">Detalles de Ubicación</h3>
+        <div class="form-row-2">
+          <div class="form-field">
+            <label class="form-label" for="add-dept">Departamento *</label>
+            <select class="form-select" id="add-dept" [value]="addForm.get('departmentId')?.value" (change)="onAddDeptChange($event)">
+              <option value="">Seleccionar</option>
+              @for (dept of departments(); track dept.id) {
+                <option [value]="dept.id">{{ dept.name }}</option>
+              }
+            </select>
+            @if (addForm.get('departmentId')?.invalid && addForm.get('departmentId')?.touched) {
+              <p style="color:#ba1a1a;font-size:11px;margin-top:4px;">Departamento requerido.</p>
+            }
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="add-prov">Provincia *</label>
+            <select class="form-select" id="add-prov" [value]="addForm.get('provinceId')?.value" (change)="onAddProvChange($event)" [disabled]="!addForm.get('departmentId')?.value">
+              <option value="">Seleccionar</option>
+              @for (prov of addProvinces(); track prov.id) {
+                <option [value]="prov.id">{{ prov.name }}</option>
+              }
+            </select>
+            @if (addForm.get('provinceId')?.invalid && addForm.get('provinceId')?.touched) {
+              <p style="color:#ba1a1a;font-size:11px;margin-top:4px;">Provincia requerida.</p>
+            }
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="add-dist">Distrito *</label>
+            <select class="form-select" id="add-dist" [value]="addForm.get('districtId')?.value" (change)="onAddDistChange($event)" [disabled]="!addForm.get('provinceId')?.value">
+              <option value="">Seleccionar</option>
+              @for (dist of addDistricts(); track dist.id) {
+              <option [value]="dist.id">{{ dist.name }}</option>
+            }
+          </select>
+          @if (addForm.get('districtId')?.invalid && addForm.get('districtId')?.touched) {
+            <p style="color:#ba1a1a;font-size:11px;margin-top:4px;">Distrito requerido.</p>
+          }
+        </div>
+      </div>
+
+      @if (addSaveError) {
+        <p style="color:#ba1a1a;font-size:12px;text-align:center;">{{ addSaveError }}</p>
+      }
+    </div>
+
+    <div class="side-panel-footer">
+      <button class="btn-cancel" type="button" (click)="closeAddPanel()">Cancelar</button>
+      <button class="btn-save" type="button" (click)="saveAgent()" [disabled]="addForm.invalid || addSaving">
+        {{ addSaving ? 'Guardando...' : 'Guardar Agente' }}
+      </button>
+    </div>
+  </aside>
+}
+
+<!-- ── Edit Agent Side Panel ─────────────────────────────────────────────────── -->
+@if (showEditPanel && selectedAgent) {
+  <div
+    class="overlay-backdrop"
+    @fadeBackdrop
+    (click)="closeEditPanel()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+  <aside class="side-panel" @slideInPanel role="dialog" aria-modal="true" aria-label="Editar agente">
+    <div class="side-panel-header">
+      <div>
+        <h2 class="side-panel-title">Editar Agente</h2>
+        <p class="side-panel-sub">Modificar detalles del punto operativo.</p>
+      </div>
+      <button class="close-btn" type="button" (click)="closeEditPanel()" aria-label="Cerrar panel">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <div class="side-panel-body" [formGroup]="editForm">
+      <!-- Información Básica -->
+      <div class="form-section">
+        <h3 class="form-section-title">Información Básica</h3>
+        <div class="form-field">
+          <label class="form-label" for="edit-business-name">Nombre del Negocio *</label>
+          <input class="form-input" id="edit-business-name" type="text" formControlName="businessName"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="edit-owner-name">Nombre del Dueño/Contacto *</label>
+          <input class="form-input" id="edit-owner-name" type="text" formControlName="ownerName"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="edit-phone">Teléfono *</label>
+          <input class="form-input" id="edit-phone" type="tel" formControlName="phone"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="edit-address">Dirección *</label>
+          <input class="form-input" id="edit-address" type="text" formControlName="address"/>
+        </div>
+      </div>
+
+      <!-- Ubicación -->
+      <div class="form-section">
+        <h3 class="form-section-title">Ubicación</h3>
+        <div class="form-row-2">
+          <div class="form-field">
+            <label class="form-label" for="edit-dept">Departamento *</label>
+            <select class="form-select" id="edit-dept" [value]="editForm.get('departmentId')?.value" (change)="onEditDeptChange($event)">
+              <option value="">Seleccionar</option>
+              @for (dept of departments(); track dept.id) {
+                <option [value]="dept.id">{{ dept.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="edit-prov">Provincia *</label>
+            <select class="form-select" id="edit-prov" [value]="editForm.get('provinceId')?.value" (change)="onEditProvChange($event)">
+              <option value="">Seleccionar</option>
+              @for (prov of editProvinces(); track prov.id) {
+                <option [value]="prov.id">{{ prov.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="edit-dist">Distrito *</label>
+            <select class="form-select" id="edit-dist" [value]="editForm.get('districtId')?.value" (change)="onEditDistChange($event)">
+              <option value="">Seleccionar</option>
+              @for (dist of editDistricts(); track dist.id) {
+              <option [value]="dist.id">{{ dist.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Estado Operativo -->
+      <div class="form-section">
+        <h3 class="form-section-title">Estado Operativo</h3>
+        <div class="status-toggle-card">
+          <div class="status-toggle-info">
+            <p class="status-toggle-label">Activar Agente</p>
+            <p class="status-toggle-desc">Habilitar para procesar transacciones.</p>
+          </div>
+          <label class="toggle toggle--lg" aria-label="Activar o desactivar agente">
+            <input class="toggle-input" type="checkbox" formControlName="status"/>
+            <div class="toggle-track toggle-track--lg"></div>
+          </label>
+        </div>
+      </div>
+
+      @if (editSaveError) {
+        <p style="color:#ba1a1a;font-size:12px;text-align:center;">{{ editSaveError }}</p>
+      }
+    </div>
+
+    <div class="side-panel-footer">
+      <button class="btn-cancel" type="button" (click)="closeEditPanel()">Cancelar</button>
+      <button class="btn-save" type="button" (click)="saveEdit()" [disabled]="editForm.invalid || editSaving">
+        {{ editSaving ? 'Guardando...' : 'Guardar Cambios' }}
+      </button>
+    </div>
+  </aside>
+}

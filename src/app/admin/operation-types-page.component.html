@@ -1,0 +1,531 @@
+<div class="op-types-page">
+  <div class="op-types-page-inner">
+
+    <!-- ── Page Header ──────────────────────────────────────────────────────── -->
+    <div class="page-header">
+      <div class="page-header-text">
+        <h1 class="page-title">Tipos de Operación</h1>
+        <p class="page-subtitle">
+          Gestione el catálogo de operaciones disponibles para los agentes.
+        </p>
+      </div>
+      <button class="btn-primary" type="button" (click)="openAddPanel()">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+        Agregar Nuevo Tipo
+      </button>
+    </div>
+
+    <!-- ── Row error banner (status toggle errors) ──────────────────────────── -->
+    @if (rowErrorMessage) {
+      <div class="error-banner" role="alert">
+        <span class="material-symbols-outlined" aria-hidden="true">error</span>
+        {{ rowErrorMessage }}
+        <button class="error-banner__close" type="button" (click)="rowErrorMessage = null" aria-label="Cerrar">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </div>
+    }
+
+    <!-- ── Filters Bar ───────────────────────────────────────────────────────── -->
+    <div class="filters-bar">
+
+      <!-- Search: custom autocomplete dropdown — pixel-perfect match to /users design -->
+      <div class="filter-search">
+        <label class="filter-label" for="op-search">Tipo de Operación</label>
+        <div class="search-input-wrapper">
+          <span class="material-symbols-outlined search-icon" aria-hidden="true">search</span>
+          <input
+            class="search-input"
+            id="op-search"
+            type="text"
+            placeholder="Buscar por nombre..."
+            [value]="searchInputValue"
+            (input)="onSearchInput($any($event.target).value)"
+            (blur)="onSearchBlur()"
+            autocomplete="off"
+          />
+          @if (showSearchDropdown) {
+            <div class="autocomplete-dropdown">
+              @if (autocomplete().loading) {
+                <div class="autocomplete-loading">
+                  <span class="autocomplete-spinner" aria-hidden="true"></span>
+                  Buscando...
+                </div>
+              } @else if (autocomplete().results.length === 0) {
+                <div class="autocomplete-empty">No se encontraron resultados</div>
+              } @else {
+                @for (item of autocomplete().results; track item.id) {
+                  <button
+                    class="autocomplete-item"
+                    type="button"
+                    (mousedown)="onSearchSelect(item.name)"
+                  >{{ item.name }}</button>
+                }
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Category filter — native select, homologated design (no Angular Material) -->
+      <div class="filter-select-group">
+        <label class="filter-label" for="op-category">Categoría</label>
+        <select
+          class="filter-select"
+          id="op-category"
+          (change)="onCategoryChange($any($event.target).value)"
+          aria-label="Filtrar por categoría"
+        >
+          <option value="">Todas las categorías</option>
+          @for (cat of categories(); track cat) {
+            <option [value]="cat">{{ cat }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Status filter — native select, homologated design (no Angular Material) -->
+      <div class="filter-select-group filter-select-group--sm">
+        <label class="filter-label" for="op-status">Estado</label>
+        <select
+          class="filter-select"
+          id="op-status"
+          (change)="onStatusChange($any($event.target).value)"
+          aria-label="Filtrar por estado"
+        >
+          <option value="">Todos los estados</option>
+          <option value="ACTIVO">Activo</option>
+          <option value="INACTIVO">Inactivo</option>
+        </select>
+      </div>
+
+      <!-- Filter actions — LIMPIAR + FILTRAR pinned to far right -->
+      <div class="filter-action-btns">
+        <button class="btn-limpiar" type="button" (click)="onLimpiar()">Limpiar</button>
+        <button class="btn-filtrar" type="button" (click)="onFiltrar()">Filtrar</button>
+      </div>
+    </div>
+
+    <!-- ── Data Table ─────────────────────────────────────────────────────────── -->
+    <div class="table-card">
+      <div class="table-scroll">
+        <table class="data-table" aria-label="Catálogo de tipos de operación">
+          <thead>
+            <tr class="table-header-row">
+              <th class="th" scope="col">Nombre</th>
+              <th class="th" scope="col">Categoría</th>
+              <th class="th" scope="col">Flujo</th>
+              <th class="th" scope="col">Estado</th>
+              <th class="th th--right" scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- Loading state (US1) -->
+            @if (state().status === 'loading') {
+              <tr>
+                <td class="td td--empty" colspan="5">
+                  <span class="loading-spinner" aria-hidden="true"></span>
+                  <p>Cargando tipos de operación...</p>
+                </td>
+              </tr>
+            }
+
+            <!-- Error state (US1, FR-021) -->
+            @else if (state().status === 'error') {
+              <tr>
+                <td class="td td--empty" colspan="5">
+                  <span class="material-symbols-outlined empty-icon" aria-hidden="true">cloud_off</span>
+                  <p>Error al cargar los tipos de operación.</p>
+                  <button class="btn-retry" type="button" (click)="reload()">
+                    <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+                    Reintentar
+                  </button>
+                </td>
+              </tr>
+            }
+
+            <!-- Empty state (US1) -->
+            @else if (state().status === 'content' && state().items.length === 0) {
+              <tr>
+                <td class="td td--empty" colspan="5">
+                  <span class="material-symbols-outlined empty-icon" aria-hidden="true">search_off</span>
+                  <p>No se encontraron tipos de operación con los filtros aplicados.</p>
+                </td>
+              </tr>
+            }
+
+            <!-- Content rows (US1) — Nombre, Categoría, Estado, Acciones — NO Comisión -->
+            @else {
+              @for (op of state().items; track op.id) {
+                <tr class="table-row">
+                  <td class="td">
+                    <p class="op-name">{{ op.name }}</p>
+                  </td>
+                  <td class="td">
+                    <span class="op-category">{{ op.category }}</span>
+                  </td>
+                  <td class="td">
+                    <span
+                      class="flow-badge"
+                      [class.flow-badge--ingreso]="op.flow === 'INGRESO'"
+                      [class.flow-badge--egreso]="op.flow === 'EGRESO'"
+                    >
+                      <span class="material-symbols-outlined flow-badge__icon" aria-hidden="true">
+                        {{ op.flow === 'INGRESO' ? 'arrow_downward' : 'arrow_upward' }}
+                      </span>
+                      {{ op.flow === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
+                    </span>
+                  </td>
+                  <td class="td">
+                    <span
+                      class="status-badge"
+                      [class.status-badge--active]="op.status === 'ACTIVO'"
+                      [class.status-badge--inactive]="op.status === 'INACTIVO'"
+                    >
+                      <span class="status-dot" aria-hidden="true"></span>
+                      {{ op.status === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td class="td td--right">
+                    <div class="row-actions">
+                      <!-- Edit button (US7) -->
+                      <button
+                        class="action-btn"
+                        type="button"
+                        title="Editar"
+                        (click)="openEditPanel(op)"
+                        [attr.aria-label]="'Editar ' + op.name"
+                      >
+                        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                      </button>
+
+                      <!-- Block/Activate button (US8) -->
+                      @if (op.status === 'ACTIVO') {
+                        <button
+                          class="action-btn action-btn--danger"
+                          type="button"
+                          title="Desactivar"
+                          [disabled]="statusChangingIds.has(op.id)"
+                          (click)="blockOperationType(op)"
+                          [attr.aria-label]="'Desactivar ' + op.name"
+                        >
+                          <span class="material-symbols-outlined" aria-hidden="true">block</span>
+                        </button>
+                      } @else {
+                        <button
+                          class="action-btn action-btn--success"
+                          type="button"
+                          title="Activar"
+                          [disabled]="statusChangingIds.has(op.id)"
+                          (click)="unblockOperationType(op)"
+                          [attr.aria-label]="'Activar ' + op.name"
+                        >
+                          <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer (US5, FR-008) -->
+      <div class="table-pagination">
+        <p class="pagination-info">
+          Mostrando
+          <strong>{{ pageStart() }}</strong> a
+          <strong>{{ pageEnd() }}</strong>
+          de <strong>{{ state().totalElements }}</strong> registros
+        </p>
+        <div class="pagination-controls">
+          <button
+            class="page-btn"
+            type="button"
+            [disabled]="state().currentPage <= 1"
+            aria-label="Página anterior"
+            (click)="goToPage(state().currentPage - 1)"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+          </button>
+
+          @for (page of pageNumbers(); track page) {
+            <button
+              class="page-btn"
+              [class.page-btn--active]="state().currentPage === page"
+              type="button"
+              [attr.aria-current]="state().currentPage === page ? 'page' : null"
+              (click)="goToPage(page)"
+            >{{ page }}</button>
+          }
+
+          <button
+            class="page-btn"
+            type="button"
+            [disabled]="state().currentPage >= totalPages()"
+            aria-label="Página siguiente"
+            (click)="goToPage(state().currentPage + 1)"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Add Operation Type Side Panel (US6 — name + category ONLY) ──────────── -->
+@if (state().activePanel === 'add') {
+  <div
+    class="overlay-backdrop"
+    @fadeBackdrop
+    (click)="closeAddPanel()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+  <aside
+    class="side-panel"
+    @slideInPanel
+    role="dialog"
+    aria-modal="true"
+    aria-label="Nuevo tipo de operación"
+  >
+    <div class="side-panel-header">
+      <h2 class="side-panel-title">Nuevo Tipo de Operación</h2>
+      <button class="close-btn" type="button" (click)="closeAddPanel()" aria-label="Cerrar panel">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <div class="side-panel-body">
+      @if (addErrorMessage) {
+        <div class="form-error-banner" role="alert">{{ addErrorMessage }}</div>
+      }
+      <form class="form-layout">
+
+        <div class="form-field">
+          <label class="form-label" for="add-name">Nombre de la Operación <span class="form-required">*</span></label>
+          <input
+            class="form-input"
+            id="add-name"
+            type="text"
+            placeholder="Ej. Depósito en Efectivo"
+            [(ngModel)]="addForm.name"
+            name="addName"
+          />
+          @if (!addForm.name.trim() && addErrorMessage) {
+            <p class="form-field-error">El nombre es obligatorio.</p>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="add-category">Categoría <span class="form-required">*</span></label>
+          <div class="category-input-wrapper">
+            <input
+              class="form-input"
+              id="add-category"
+              type="text"
+              placeholder="Seleccione o escriba una categoría..."
+              [(ngModel)]="addForm.category"
+              name="addCategory"
+              autocomplete="off"
+              (input)="onAddCategoryInput()"
+              (focus)="onAddCategoryInput()"
+              (blur)="onAddCategoryBlur()"
+            />
+            @if (showAddCategoryDropdown && getCategoryItems(addForm.category).length > 0) {
+              <div class="category-dropdown" role="listbox">
+                @for (cat of getCategoryItems(addForm.category); track cat) {
+                  <button
+                    class="autocomplete-item"
+                    type="button"
+                    role="option"
+                    (mousedown)="onAddCategorySelect(cat)"
+                  >{{ cat }}</button>
+                }
+              </div>
+            }
+          </div>
+          <p class="form-hint">Seleccione una existente o escriba el nombre de una nueva categoría.</p>
+          @if (!addForm.category && addErrorMessage) {
+            <p class="form-field-error">La categoría es obligatoria.</p>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="add-flow">Flujo <span class="form-required">*</span></label>
+          <select
+            class="form-input form-select"
+            id="add-flow"
+            [ngModel]="addForm.flow"
+            (ngModelChange)="onAddFlowChange($event)"
+            name="addFlow"
+          >
+            <option value="INGRESO">↓ Ingreso (Entrada)</option>
+            <option value="EGRESO">↑ Egreso (Salida)</option>
+          </select>
+          <p class="form-hint">Indica si la operación representa un ingreso o egreso de fondos.</p>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="side-panel-footer">
+      <button class="btn-cancel" type="button" (click)="closeAddPanel()">Cancelar</button>
+      <button
+        class="btn-save"
+        type="button"
+        [disabled]="isSavingAdd"
+        (click)="saveNewOperationType()"
+      >
+        @if (isSavingAdd) { Registrando... } @else { Registrar }
+      </button>
+    </div>
+  </aside>
+}
+
+<!-- ── Edit Operation Type Side Panel (US7 — name + category + enabled ONLY) ── -->
+@if (state().activePanel === 'edit' && state().editTarget) {
+  <div
+    class="overlay-backdrop"
+    @fadeBackdrop
+    (click)="closeEditPanel()"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
+  <aside
+    class="side-panel"
+    @slideInPanel
+    role="dialog"
+    aria-modal="true"
+    aria-label="Editar tipo de operación"
+  >
+    <div class="side-panel-header side-panel-header--edit">
+      <div class="side-panel-header-left">
+        <span class="material-symbols-outlined side-panel-icon" aria-hidden="true">edit_square</span>
+        <h2 class="side-panel-title">Editar Tipo de Operación</h2>
+      </div>
+      <button class="close-btn" type="button" (click)="closeEditPanel()" aria-label="Cerrar panel">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <div class="side-panel-body">
+      @if (editErrorMessage) {
+        <div class="form-error-banner" role="alert">{{ editErrorMessage }}</div>
+      }
+      <form class="form-layout">
+
+        <div>
+          <span class="id-badge">ID: {{ state().editTarget!.id }}</span>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="edit-name">Nombre de la Operación <span class="form-required">*</span></label>
+          <input
+            class="form-input"
+            id="edit-name"
+            type="text"
+            [(ngModel)]="editForm.name"
+            name="editName"
+          />
+          @if (!editForm.name.trim() && editErrorMessage) {
+            <p class="form-field-error">El nombre es obligatorio.</p>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="edit-category">Categoría <span class="form-required">*</span></label>
+          <div class="category-input-wrapper">
+            <input
+              class="form-input"
+              id="edit-category"
+              type="text"
+              placeholder="Seleccione o escriba una categoría..."
+              [(ngModel)]="editForm.category"
+              name="editCategory"
+              autocomplete="off"
+              (input)="onEditCategoryInput()"
+              (focus)="onEditCategoryInput()"
+              (blur)="onEditCategoryBlur()"
+            />
+            @if (showEditCategoryDropdown && getCategoryItems(editForm.category).length > 0) {
+              <div class="category-dropdown" role="listbox">
+                @for (cat of getCategoryItems(editForm.category); track cat) {
+                  <button
+                    class="autocomplete-item"
+                    type="button"
+                    role="option"
+                    (mousedown)="onEditCategorySelect(cat)"
+                  >{{ cat }}</button>
+                }
+              </div>
+            }
+          </div>
+          <p class="form-hint">Seleccione una existente o escriba el nombre de una nueva categoría.</p>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="edit-flow">Flujo <span class="form-required">*</span></label>
+          <select
+            class="form-input form-select"
+            id="edit-flow"
+            [ngModel]="editForm.flow"
+            (ngModelChange)="onEditFlowChange($event)"
+            name="editFlow"
+          >
+            <option value="INGRESO">↓ Ingreso (Entrada)</option>
+            <option value="EGRESO">↑ Egreso (Salida)</option>
+          </select>
+          <p class="form-hint">Indica si la operación representa un ingreso o egreso de fondos.</p>
+        </div>
+
+        <!-- Estado toggle (FR-011 — enabled flag governs ACTIVO/INACTIVO) -->
+        <div class="status-section">
+          <div class="status-section-header">
+            <span
+              class="material-symbols-outlined status-icon"
+              [class.status-icon--active]="editForm.enabled"
+              [class.status-icon--inactive]="!editForm.enabled"
+              aria-hidden="true"
+            >{{ editForm.enabled ? 'check_circle' : 'cancel' }}</span>
+            <span class="status-label">
+              Estado: <strong>{{ editForm.enabled ? 'Activo' : 'Inactivo' }}</strong>
+            </span>
+          </div>
+          <p class="status-desc">
+            {{ editForm.enabled
+              ? 'Esta operación está disponible para su uso inmediato en el sistema.'
+              : 'Esta operación está desactivada y no está disponible para los agentes.' }}
+          </p>
+          <label class="toggle" aria-label="Activar o desactivar operación">
+            <input
+              class="toggle-input"
+              type="checkbox"
+              [(ngModel)]="editForm.enabled"
+              name="editEnabled"
+            />
+            <div class="toggle-track toggle-track--lg"></div>
+          </label>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="side-panel-footer">
+      <button class="btn-cancel" type="button" (click)="closeEditPanel()">Descartar</button>
+      <button
+        class="btn-save"
+        type="button"
+        [disabled]="isSavingEdit"
+        (click)="saveEditOperationType()"
+      >
+        @if (isSavingEdit) { Guardando... } @else { Guardar Cambios }
+      </button>
+    </div>
+  </aside>
+}

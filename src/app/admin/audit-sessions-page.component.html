@@ -1,0 +1,271 @@
+<!-- Audit Sessions Page — fully backend-driven (FR-001/SC-001) -->
+<div class="audit-page">
+  <div class="audit-page-inner">
+
+    <!-- ── Page Header ──────────────────────────────────────────────────────── -->
+    <div class="page-header">
+      <div class="page-header-text">
+        <h1 class="page-title">Registro de Auditoría de Sesiones</h1>
+        <p class="page-subtitle">Historial exhaustivo de inicios de sesión y actividad del sistema.</p>
+      </div>
+      <!-- US9: Export CSV — disabled while exporting (FR-019) -->
+      <button
+        class="btn-export"
+        type="button"
+        [disabled]="state.exporting"
+        (click)="exportCsv()">
+        <span class="material-symbols-outlined" aria-hidden="true">download</span>
+        @if (state.exporting) { Exportando… } @else { Exportar Reporte }
+      </button>
+    </div>
+
+    <!-- US9: Partial-export warning (FR-018) -->
+    @if (state.exportTruncated) {
+      <div class="export-warning" role="alert">
+        <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+        El resultado supera 10,000 registros. Se exportaron solo los primeros 10,000 (más recientes). Aplique filtros adicionales para reducir el conjunto.
+      </div>
+    }
+
+    <!-- ── Filters Bar — same structure/classes as users-page ──────────────── -->
+    <div class="filters-bar">
+
+      <!-- US2: Date range — single input with Angular Material date range picker -->
+      <div class="filter-select-group filter-select-group--date-range">
+        <label class="filter-label">Rango de Fechas</label>
+        <div class="audit-date-trigger" (click)="auditDatePicker.open()">
+          <span class="filter-date-display">
+            {{ dateRangeDisplay || 'Seleccionar fechas' }}
+          </span>
+          <!-- Hidden Material date range field -->
+          <mat-form-field class="audit-date-hidden-field" subscriptSizing="dynamic">
+            <mat-date-range-input [rangePicker]="auditDatePicker" [formGroup]="dateRangeGroup">
+              <input matStartDate formControlName="dateFrom">
+              <input matEndDate formControlName="dateTo">
+            </mat-date-range-input>
+            <mat-datepicker-toggle matIconSuffix [for]="auditDatePicker"></mat-datepicker-toggle>
+            <mat-date-range-picker #auditDatePicker></mat-date-range-picker>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- US3: Role filter (FR-011) — native select, homologated design -->
+      <div class="filter-select-group filter-select-group--sm">
+        <label class="filter-label" for="filter-role">Rol</label>
+        <select
+          class="audit-filter-select"
+          id="filter-role"
+          [(ngModel)]="pendingRoleValue"
+          (change)="onRoleChange($any($event.target).value)"
+          aria-label="Filtrar por rol"
+        >
+          <option value="">Todos los Roles</option>
+          <option value="ADMIN">Admin</option>
+          <option value="OPERADOR">Operador</option>
+        </select>
+      </div>
+
+      <!-- US4: Status filter (FR-012) — native select, homologated design -->
+      <div class="filter-select-group filter-select-group--sm">
+        <label class="filter-label" for="filter-status">Estado</label>
+        <select
+          class="audit-filter-select"
+          id="filter-status"
+          [(ngModel)]="pendingStatusValue"
+          (change)="onStatusChange($any($event.target).value)"
+          aria-label="Filtrar por estado"
+        >
+          <option value="">Todos los Estados</option>
+          <option value="ACTIVA">Activa</option>
+          <option value="CERRADA">Cerrada</option>
+          <option value="EXPIRADA">Expirada</option>
+          <option value="EXITOSA">Renovada</option>
+          <option value="FALLIDA">Fallida</option>
+        </select>
+      </div>
+
+      <!-- US5: Device filter (FR-013) — native select, homologated design -->
+      <div class="filter-select-group">
+        <label class="filter-label" for="filter-device">Dispositivo</label>
+        <select
+          class="audit-filter-select"
+          id="filter-device"
+          [(ngModel)]="pendingDeviceValue"
+          (change)="onDeviceChange($any($event.target).value)"
+          aria-label="Filtrar por dispositivo"
+        >
+          <option value="">Todos los Dispositivos</option>
+          @for (device of state.deviceOptions; track device) {
+            <option [value]="device">{{ device }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Filter actions — LIMPIAR + FILTRAR pinned to far right -->
+      <div class="filter-action-btns">
+        <button class="btn-limpiar" type="button" (click)="onLimpiar()">Limpiar</button>
+        <button class="btn-filtrar" type="button" (click)="onFiltrar()">Filtrar</button>
+      </div>
+
+    </div>
+
+    <!-- ── Data Table ─────────────────────────────────────────────────────────── -->
+    <div class="table-card">
+      <div class="table-scroll">
+        <table class="data-table" aria-label="Registro de sesiones de auditoría">
+          <thead>
+            <tr class="table-header-row">
+              <th class="th" scope="col">Usuario</th>
+              <th class="th" scope="col">Rol</th>
+              <th class="th" scope="col">Fecha y Hora</th>
+              <th class="th" scope="col">Dirección IP</th>
+              <th class="th" scope="col">Dispositivo</th>
+              <th class="th" scope="col">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- US1: Loading state (FR-020) -->
+            @if (state.status === 'loading') {
+              <tr>
+                <td class="td td--empty" colspan="6" aria-busy="true">
+                  <span class="material-symbols-outlined empty-icon" aria-hidden="true">progress_activity</span>
+                  <p>Cargando registros…</p>
+                </td>
+              </tr>
+            }
+
+            <!-- US1: Error state with retry (FR-020) -->
+            @else if (state.status === 'error') {
+              <tr>
+                <td class="td td--empty" colspan="6">
+                  <span class="material-symbols-outlined empty-icon" aria-hidden="true">error_outline</span>
+                  <p>{{ state.error ?? 'Error al cargar los registros.' }}</p>
+                  <button class="btn-retry" type="button" (click)="facade.retry()">
+                    <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+                    Reintentar
+                  </button>
+                </td>
+              </tr>
+            }
+
+            <!-- US1: Data rows -->
+            @else {
+              @for (session of state.items; track trackById($index, session)) {
+                <tr class="table-row">
+
+                  <!-- User (FR-015, FR-016) -->
+                  <td class="td">
+                    <div class="user-cell">
+                      <div
+                        class="user-initials"
+                        [class.user-initials--admin]="isAdminRole(session.userRole)"
+                        aria-hidden="true"
+                      >{{ initials(session.displayName, session.userEmail) }}</div>
+                      <span class="user-email">{{ session.userEmail }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Role -->
+                  <td class="td">
+                    <span class="role-text">{{ session.userRole === 'ADMIN' ? 'Admin' : 'Operador' }}</span>
+                  </td>
+
+                  <!-- Date/Time (FR-015) -->
+                  <td class="td">
+                    <span class="data-mono">{{ session.loginAt | date:'dd/MM/yy HH:mm:ss' }}</span>
+                  </td>
+
+                  <!-- IP (FR-015) -->
+                  <td class="td">
+                    <span class="data-mono">{{ session.ipAddress }}</span>
+                  </td>
+
+                  <!-- Device (FR-015) -->
+                  <td class="td">
+                    <span class="device-text">{{ session.deviceInfo }}</span>
+                  </td>
+
+                  <!-- Status badge (FR-017) -->
+                  <td class="td">
+                    <span
+                      class="status-badge"
+                      [class.status-badge--active]="session.status === 'ACTIVA'"
+                      [class.status-badge--closed]="session.status === 'CERRADA'"
+                      [class.status-badge--expired]="session.status === 'EXPIRADA'"
+                      [class.status-badge--successful]="session.status === 'EXITOSA'"
+                      [class.status-badge--failed]="session.status === 'FALLIDA'"
+                    >
+                      @if (session.status === 'ACTIVA') {
+                        <span class="status-dot" aria-hidden="true"></span>
+                      }
+                      {{ statusLabel(session.status) }}
+                    </span>
+                  </td>
+
+                </tr>
+              }
+
+              <!-- US1: Empty state -->
+              @if (state.items.length === 0) {
+                <tr>
+                  <td class="td td--empty" colspan="6">
+                    <span class="material-symbols-outlined empty-icon" aria-hidden="true">search_off</span>
+                    <p>No se encontraron registros con los filtros aplicados.</p>
+                  </td>
+                </tr>
+              }
+            }
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- US8: Pagination Footer — driven by backend totalElements (FR-005) -->
+      <div class="table-pagination">
+        <p class="pagination-info">
+          Mostrando
+          <strong>{{ state.items.length }}</strong>
+          de
+          <strong>{{ state.totalElements }}</strong>
+          registros
+        </p>
+        <div class="pagination-controls" role="navigation" aria-label="Paginación">
+
+          <button
+            class="page-btn"
+            type="button"
+            [disabled]="state.currentPage === 1"
+            (click)="goToPage(state.currentPage - 1)"
+            aria-label="Página anterior">
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+          </button>
+
+          @let pages = pageNumbers;
+          @for (page of pages; track page; let i = $index) {
+            @if (i > 0 && page - pages[i - 1] > 1) {
+              <span class="page-ellipsis" aria-hidden="true">…</span>
+            }
+            <button
+              class="page-btn"
+              [class.page-btn--active]="page === state.currentPage"
+              type="button"
+              [attr.aria-current]="page === state.currentPage ? 'page' : null"
+              (click)="goToPage(page)">{{ page }}</button>
+          }
+
+          <button
+            class="page-btn"
+            type="button"
+            [disabled]="state.currentPage >= totalPages"
+            (click)="goToPage(state.currentPage + 1)"
+            aria-label="Página siguiente">
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

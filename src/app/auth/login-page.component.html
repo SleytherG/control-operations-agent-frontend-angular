@@ -1,0 +1,127 @@
+<!-- Login Page — pixel-perfect per mockup screen 05 (05-inicio-de-sesion) -->
+<!-- Uses project design system: --af-* CSS custom properties + semantic class names -->
+
+<div class="login-page">
+
+  <div class="login-card">
+
+    <!-- ── Header / Logo ───────────────────────────────────────────────── -->
+    <div class="login-header">
+      <div class="login-logo">
+        <span class="material-symbols-outlined">hub</span>
+      </div>
+      <h1 class="login-title">AgenteFlow</h1>
+      <p class="login-subtitle">Acceso seguro a operaciones</p>
+    </div>
+
+    <!-- ── Session Revoked Banner (FR-028 — single-session enforcement) ── -->
+    @if (isSessionRevoked) {
+      <div class="revoked-banner" role="alert">
+        <span class="material-symbols-outlined revoked-icon">devices_off</span>
+        <div class="error-content">
+          <p class="error-title">Sesión cerrada</p>
+          <p class="error-message">
+            Tu sesión fue cerrada porque iniciaste sesión desde otro dispositivo.
+          </p>
+        </div>
+        <button class="error-close" type="button" (click)="closeSessionRevoked()" aria-label="Cerrar aviso">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    }
+
+    <!-- ── Error Banner (FR-008 / FR-009) ─────────────────────────────── -->
+    @if (hasError) {
+      <div class="error-banner" role="alert">
+        <span class="material-symbols-outlined error-icon">error</span>
+        <div class="error-content">
+          <p class="error-title">{{ errorTitle }}</p>
+          <p class="error-message">{{ errorMessage }}</p>
+        </div>
+        <button class="error-close" type="button" (click)="closeError()" aria-label="Cerrar aviso">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    }
+
+    <!-- ── Login Form ──────────────────────────────────────────────────── -->
+    <form class="login-form" (ngSubmit)="onSubmit()" #loginForm="ngForm">
+
+      <!-- Usuario o Correo -->
+      <div class="field-group">
+        <label class="field-label" for="email">Usuario o Correo</label>
+        <div class="field-input-wrapper">
+          <span class="material-symbols-outlined field-icon">person</span>
+          <input
+            id="email"
+            name="email"
+            type="text"
+            class="field-input"
+            [(ngModel)]="email"
+            placeholder="ID de agente o email"
+            required
+            autocomplete="username"
+            [disabled]="isLoading || isRateLimited"
+          />
+        </div>
+      </div>
+
+      <!-- Contraseña -->
+      <div class="field-group">
+        <div class="field-header">
+          <label class="field-label" for="password">Contraseña</label>
+          <a routerLink="/recuperar-contrasena" class="field-link">¿Olvidó su contraseña?</a>
+        </div>
+        <div class="field-input-wrapper">
+          <span class="material-symbols-outlined field-icon">lock</span>
+          <input
+            id="password"
+            name="password"
+            [type]="passwordVisible() ? 'text' : 'password'"
+            class="field-input"
+            [(ngModel)]="password"
+            placeholder="••••••••"
+            required
+            autocomplete="current-password"
+            [disabled]="isLoading || isRateLimited"
+          />
+          <!-- Password visibility toggle (FR-011) -->
+          <button
+            type="button"
+            class="field-toggle"
+            (click)="togglePasswordVisibility()"
+            [disabled]="isLoading || isRateLimited"
+            aria-label="Mostrar u ocultar contraseña"
+          >
+            <span class="material-symbols-outlined">
+              {{ passwordVisible() ? 'visibility_off' : 'visibility' }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Submit button (FR-004: spinner + disabled when loading) -->
+      <button
+        type="submit"
+        class="btn-login"
+        [disabled]="isLoading || isRateLimited"
+      >
+        @if (isLoading) {
+          <span class="material-symbols-outlined">progress_activity</span>
+        } @else {
+          Iniciar sesión
+        }
+      </button>
+
+    </form>
+
+    <!-- ── Footer ─────────────────────────────────────────────────────── -->
+    <div class="login-footer">
+      <p class="footer-text">
+        ¿Necesita acceso?
+        <a href="#" class="footer-link">Contacte al administrador</a>
+      </p>
+    </div>
+
+  </div>
+</div>

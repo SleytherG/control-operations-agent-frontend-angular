@@ -1,0 +1,196 @@
+<!-- Mandatory Password Change Full-Screen Overlay (FR-001, FR-002, FR-017) -->
+<!-- role="dialog" + aria-modal blocks interaction with background content (FR-002) -->
+<div
+  class="pccc-overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="pccc-title"
+  aria-describedby="pccc-description"
+>
+  <!-- Focus Card — cdkTrapFocus keeps keyboard focus inside the modal (FR-018, SC-008) -->
+  <div
+    class="pccc-card"
+    cdkTrapFocus
+    cdkTrapFocusAutoCapture="true"
+  >
+
+    <!-- Header -->
+    <div class="pccc-header">
+      <div class="pccc-icon-wrap" aria-hidden="true">
+        <span class="material-symbols-outlined pccc-icon">lock_reset</span>
+      </div>
+      <h2 id="pccc-brand" class="pccc-brand">AgenteFlow</h2>
+      <h3 id="pccc-title" class="pccc-title">Actualización de Seguridad Requerida</h3>
+      <p id="pccc-description" class="pccc-desc">
+        Para mantener la seguridad de sus operaciones financieras, debe actualizar su contraseña
+        temporal antes de continuar.
+      </p>
+    </div>
+
+    <!-- Form Body -->
+    <div class="pccc-body">
+
+      <!-- Backend error message (FR-010, FR-011) -->
+      @if (errorMessage()) {
+        <div class="pccc-error-banner" role="alert" aria-live="polite">
+          <span class="material-symbols-outlined pccc-error-icon" aria-hidden="true">error</span>
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <!-- Step 1: Temporary Password -->
+      <div class="pccc-step">
+        <label for="temp-password" class="pccc-step-label">
+          1. Contraseña Temporal
+        </label>
+        <p class="pccc-step-hint">
+          Ingrese la contraseña que recibió por correo electrónico.
+        </p>
+        <div class="pccc-input-wrap">
+          <input
+            id="temp-password"
+            [type]="showTempPassword() ? 'text' : 'password'"
+            class="pccc-input"
+            placeholder="••••••••"
+            maxlength="128"
+            autocomplete="current-password"
+            [value]="temporaryPassword()"
+            (input)="onTemporaryPasswordInput($event)"
+            aria-required="true"
+          />
+          <button
+            type="button"
+            class="pccc-visibility-btn"
+            (click)="toggleTempVisibility()"
+            [attr.aria-label]="showTempPassword() ? 'Ocultar contraseña temporal' : 'Mostrar contraseña temporal'"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              {{ showTempPassword() ? 'visibility' : 'visibility_off' }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: New Password -->
+      <div class="pccc-step">
+        <label for="new-password" class="pccc-step-label">
+          2. Nueva Contraseña
+        </label>
+        <p class="pccc-step-hint">
+          Cree una nueva contraseña segura siguiendo los requisitos.
+        </p>
+        <div class="pccc-input-wrap">
+          <input
+            id="new-password"
+            [type]="showNewPassword() ? 'text' : 'password'"
+            class="pccc-input"
+            placeholder="Nueva contraseña"
+            maxlength="128"
+            autocomplete="new-password"
+            [value]="newPassword()"
+            (input)="onNewPasswordInput($event)"
+            aria-required="true"
+            aria-describedby="pccc-requirements"
+          />
+          <button
+            type="button"
+            class="pccc-visibility-btn"
+            (click)="toggleNewVisibility()"
+            [attr.aria-label]="showNewPassword() ? 'Ocultar nueva contraseña' : 'Mostrar nueva contraseña'"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              {{ showNewPassword() ? 'visibility' : 'visibility_off' }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Requirements List (FR-005, FR-018 — icon + text, not color alone) -->
+        <ul id="pccc-requirements" class="pccc-requirements" aria-label="Requisitos de contraseña">
+          <li class="pccc-req" [class.pccc-req--met]="hasMinLength()">
+            <span class="material-symbols-outlined pccc-req-icon" aria-hidden="true">
+              {{ hasMinLength() ? 'check_circle' : 'radio_button_unchecked' }}
+            </span>
+            <span>Mínimo 8 caracteres</span>
+          </li>
+          <li class="pccc-req" [class.pccc-req--met]="hasUppercase()">
+            <span class="material-symbols-outlined pccc-req-icon" aria-hidden="true">
+              {{ hasUppercase() ? 'check_circle' : 'radio_button_unchecked' }}
+            </span>
+            <span>Al menos una letra mayúscula</span>
+          </li>
+          <li class="pccc-req" [class.pccc-req--met]="hasNumber()">
+            <span class="material-symbols-outlined pccc-req-icon" aria-hidden="true">
+              {{ hasNumber() ? 'check_circle' : 'radio_button_unchecked' }}
+            </span>
+            <span>Al menos un número</span>
+          </li>
+          <li class="pccc-req" [class.pccc-req--met]="hasSpecial()">
+            <span class="material-symbols-outlined pccc-req-icon" aria-hidden="true">
+              {{ hasSpecial() ? 'check_circle' : 'radio_button_unchecked' }}
+            </span>
+            <span>Al menos un carácter especial (!&#64;#$%^&*)</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Step 3: Confirm Password -->
+      <div class="pccc-step">
+        <label for="confirm-password" class="pccc-step-label">
+          3. Confirmar Contraseña
+        </label>
+        <div class="pccc-input-wrap">
+          <input
+            id="confirm-password"
+            [type]="showConfirmPassword() ? 'text' : 'password'"
+            class="pccc-input"
+            placeholder="Vuelva a escribir la nueva contraseña"
+            maxlength="128"
+            autocomplete="new-password"
+            [value]="confirmPassword()"
+            (input)="onConfirmPasswordInput($event)"
+            aria-required="true"
+            [attr.aria-invalid]="confirmPassword() && !confirmMatches() ? 'true' : null"
+          />
+          <button
+            type="button"
+            class="pccc-visibility-btn"
+            (click)="toggleConfirmVisibility()"
+            [attr.aria-label]="showConfirmPassword() ? 'Ocultar confirmación' : 'Mostrar confirmación'"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              {{ showConfirmPassword() ? 'visibility' : 'visibility_off' }}
+            </span>
+          </button>
+        </div>
+        <!-- Inline confirm mismatch feedback (FR-012) -->
+        @if (confirmPassword() && !confirmMatches()) {
+          <p class="pccc-field-error" role="alert">
+            <span class="material-symbols-outlined pccc-field-error-icon" aria-hidden="true">error</span>
+            Las contraseñas no coinciden
+          </p>
+        }
+      </div>
+
+    </div>
+
+    <!-- Footer / Action -->
+    <div class="pccc-footer">
+      <button
+        type="button"
+        class="pccc-submit"
+        [disabled]="isSubmitDisabled()"
+        [attr.aria-busy]="isSubmitting()"
+        (click)="onSubmit()"
+      >
+        @if (isSubmitting()) {
+          <span class="pccc-spinner" aria-hidden="true"></span>
+          <span>Procesando...</span>
+        } @else {
+          <span class="material-symbols-outlined" aria-hidden="true">shield_lock</span>
+          <span>Confirmar Cambio de Seguridad</span>
+        }
+      </button>
+    </div>
+
+  </div>
+</div>
