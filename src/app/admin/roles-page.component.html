@@ -81,7 +81,8 @@
         </div>
       </ng-container>
 
-      <!-- User items -->
+      <!-- User items — only visible when NOT loading (prevents old data showing behind skeleton) -->
+      <ng-container *ngIf="facade.state().listStatus !== 'loading'">
       <button
         *ngFor="let user of facade.filteredUsers()"
         class="user-item"
@@ -128,6 +129,7 @@
           >Inactivo</span>
         </div>
       </button>
+      </ng-container>
     </div>
   </section>
 
