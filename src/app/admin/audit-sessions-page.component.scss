@@ -92,17 +92,22 @@
   .material-symbols-outlined { font-size: 20px; flex-shrink: 0; }
 }
 
-// ─── Filters Bar — single row, same as control-operaciones reference ──────────
+// ─── Filters Bar ─────────────────────────────────────────────────────────────
 .filters-bar {
   background-color: var(--af-surface-container-lowest);
   border: 1px solid var(--af-outline-variant);
   border-radius: 12px;
   padding: 16px;
   display: flex;
-  flex-wrap: nowrap;    // keep everything on ONE row (pixel-perfect with reference)
+  flex-wrap: wrap;
   gap: 12px;
   align-items: flex-end;
-  overflow-x: auto;     // scroll horizontally on very small screens rather than wrap
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
 }
 
 .filter-label {
@@ -126,6 +131,11 @@
 
   &.filter-select-group--date-range {
     min-width: 200px;
+  }
+
+  @media (max-width: 767px) {
+    min-width: 0;
+    width: 100%;
   }
 }
 
@@ -255,16 +265,27 @@
 
 }
 
-// ─── Filter action buttons (LIMPIAR + FILTRAR) — pinned to far right ──────────
+// ─── Filter action buttons (LIMPIAR + FILTRAR) ────────────────────────────────
 
 .filter-action-btns {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;    // absorbs all remaining space → pins buttons to far right
-  align-self: flex-end; // aligns to input baseline (same 38px height)
+  margin-left: auto;
+  align-self: flex-end;
   flex-shrink: 0;
-  padding-bottom: 1px;  // fine-tune vertical alignment with labelled inputs
+  padding-bottom: 1px;
+
+  @media (max-width: 767px) {
+    margin-left: 0;
+    width: 100%;
+
+    .btn-limpiar,
+    .btn-filtrar {
+      flex: 1;
+      justify-content: center;
+    }
+  }
 }
 
 .btn-limpiar {
