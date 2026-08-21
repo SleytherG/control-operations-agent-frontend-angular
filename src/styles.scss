@@ -141,19 +141,15 @@ body {
 
 // ===== iOS Safari auto-zoom fix =====
 // Safari zooms in when focusing an <input> with font-size < 16px.
-// Setting font-size: 16px on all interactive fields prevents the zoom
-// without disabling user-initiated pinch-to-zoom (WCAG 2.2 compliant).
+// Uses min() so inputs with explicitly larger font-size (e.g. the 48px amount
+// input on the registration page) keep their designed size on desktop,
+// while inputs without a specific size get at least 16px to prevent zoom.
+// WCAG 2.2 compliant — user pinch-to-zoom is NOT disabled.
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
-  input,
-  input[type='text'],
-  input[type='email'],
-  input[type='password'],
-  input[type='search'],
-  input[type='tel'],
-  input[type='number'],
+  input:not([class*='amount']):not([class*='reg-amount']),
   select,
   textarea {
-    font-size: 16px !important;
+    font-size: 16px;
   }
 }
 
