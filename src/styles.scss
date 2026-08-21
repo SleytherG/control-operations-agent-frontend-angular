@@ -139,6 +139,24 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+// ===== iOS Safari auto-zoom fix =====
+// Safari zooms in when focusing an <input> with font-size < 16px.
+// Setting font-size: 16px on all interactive fields prevents the zoom
+// without disabling user-initiated pinch-to-zoom (WCAG 2.2 compliant).
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  input,
+  input[type='text'],
+  input[type='email'],
+  input[type='password'],
+  input[type='search'],
+  input[type='tel'],
+  input[type='number'],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 // Ensure visible focus ring for keyboard navigation (WCAG 2.2 Focus Appearance)
 :focus-visible {
   outline: 3px solid #1565c0;
