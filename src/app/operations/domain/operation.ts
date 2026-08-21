@@ -18,6 +18,10 @@ export interface OperationResponse {
   lastModifiedAt: string;
   /** Lifecycle status: 'ACTIVE' or 'CANCELLED' */
   status: string;
+  /** Nullable agent ID (numeric string) */
+  agentId?: string | null;
+  /** Nullable agent business name */
+  agentName?: string | null;
 }
 
 /** Request body for PUT /api/v1/operations/{id} */

@@ -119,7 +119,7 @@
                   <td class="cell-mono">
                     <time [dateTime]="op.registeredAt">{{ formatDate(op.registeredAt) }}</time>
                   </td>
-                  <td class="cell-mono cell-muted">—</td>
+                  <td class="cell-mono cell-muted">{{ op.agentName || '—' }}</td>
                   <td class="cell-body">{{ formatType(op.type) }}</td>
                   <td class="cell-mono col-right cell-amount">S/ {{ formatAmount(op.amount) }}</td>
                   <td>
