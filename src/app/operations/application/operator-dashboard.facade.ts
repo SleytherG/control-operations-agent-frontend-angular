@@ -49,7 +49,9 @@ export class OperatorDashboardFacade {
    * when the user switches between sessions (A-02 / C3 remediation).
    */
   readonly greeting = computed<string>(() => {
-    const name = this._displayName() || 'Operador';
+    const fullName = this._displayName() || 'Operador';
+    // Show only the first name in the greeting to keep it concise
+    const name = fullName.split(' ')[0] || 'Operador';
     const hour = new Date().getHours();
     let prefix: string;
     if (hour < 12)      prefix = 'Buenos días';
